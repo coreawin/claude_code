@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마계촌</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: monospace;
+  }
+  #gameCanvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+  #overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.82);
+    z-index: 10;
+  }
+  #overlay h1 {
+    font-family: monospace;
+    font-size: clamp(20px, 4vw, 40px);
+    color: #ff4400;
+    text-shadow: 3px 3px 0 #880000;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  #overlay .sub {
+    font-size: clamp(8px, 1.5vw, 12px);
+    color: #ff8800;
+    margin-bottom: 18px;
+    letter-spacing: 2px;
+  }
+  #overlay p {
+    font-size: clamp(9px, 1.8vw, 14px);
+    color: #ccc;
+    margin: 5px 0;
+    letter-spacing: 1px;
+  }
+  #overlay .start-btn {
+    margin-top: 22px;
+    font-family: monospace;
+    font-size: clamp(12px, 2vw, 16px);
+    color: #000;
+    background: #ff4400;
+    border: none;
+    padding: 10px 28px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    animation: glow 1s ease-in-out infinite;
+  }
+  @keyframes glow {
+    0%,100% { box-shadow: 0 0 10px #f40; }
+    50% { box-shadow: 0 0 25px #f40, 0 0 40px #f40; }
+  }
+  #homeBtn {
+    position: fixed;
+    top: 12px; left: 12px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #888;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid #444;
+    padding: 5px 10px;
+    cursor: pointer;
+    z-index: 20;
+    text-decoration: none;
+  }
+  #homeBtn:hover { color: #fff; border-color: #fff; }
+</style>
+</head>
+<body>
+<a href="../index.html" id="homeBtn">◀ MENU</a>
+<canvas id="gameCanvas"></canvas>
+<div id="overlay">
+  <h1>마계촌</h1>
+  <div class="sub">GHOSTS 'N GOBLINS</div>
+  <p>← → : 이동 &nbsp;&nbsp; ↑/Z : 점프</p>
+  <p>X / SPACE : 무기 투척</p>
+  <p style="color:#ff8800;margin-top:8px">갑옷 착용 → 1격: 속옷 → 2격: 사망</p>
+  <button class="start-btn" onclick="startGame()">▶ START GAME</button>
+  <p style="margin-top:16px;font-size:10px;color:#555"><a href="../index.html" style="color:#555;text-decoration:none">◀ BACK TO MENU</a></p>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+
+// ── Internal resolution ──────────────────────────────
+const GW = 768, GH = 432;
+let scale = 1;
+
+function resizeCanvas() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  scale = Math.min(vw / GW, vh / GH);
+  canvas.width  = GW * scale;
+  canvas.height = GH * scale;
+  canvas.style.display = 'block';
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ── Input ────────────────────────────────────────────
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+});
+window.addEventListener('keyup', e => {
+  keys[e.code] = false;
+  // Reset jump press
+  if (e.code === 'ArrowUp' || e.code === 'KeyZ') jumpPressed = false;
+});
+let jumpPressed = false;
+
+// ── Constants ────────────────────────────────────────
+const GRAVITY = 0.5;
+const JUMP_FORCE = -11;
+const GROUND_Y = GH - 60;
+
+// ── Game state ───────────────────────────────────────
+let state, rafId;
+
+function makePlatforms() {
+  return [
+    // Ground stretches
+    { x: 0,    y: GROUND_Y, w: 800, h: 60 },
+    { x: 900,  y: GROUND_Y, w: 500, h: 60 },
+    { x: 1500, y: GROUND_Y, w: 600, h: 60 },
+    { x: 2200, y: GROUND_Y, w: 800, h: 60 },
+    { x: 3100, y: GROUND_Y, w: 800, h: 60 },
+    // Raised platforms
+    { x: 320,  y: GROUND_Y - 80, w: 120, h: 20 },
+    { x: 520,  y: GROUND_Y - 120, w: 100, h: 20 },
+    { x: 1050, y: GROUND_Y - 90, w: 140, h: 20 },
+    { x: 1700, y: GROUND_Y - 100, w: 120, h: 20 },
+    { x: 1900, y: GROUND_Y - 80, w: 100, h: 20 },
+    { x: 2400, y: GROUND_Y - 110, w: 130, h: 20 },
+    { x: 2700, y: GROUND_Y - 80, w: 100, h: 20 },
+    { x: 3200, y: GROUND_Y - 100, w: 120, h: 20 },
+    { x: 3500, y: GROUND_Y - 120, w: 150, h: 20 },
+  ];
+}
+
+function makeEnemySpawns() {
+  return [
+    { x: 500,  type: 'zombie', spawned: false },
+    { x: 700,  type: 'zombie', spawned: false },
+    { x: 900,  type: 'crow',   spawned: false },
+    { x: 1100, type: 'zombie', spawned: false },
+    { x: 1300, type: 'crow',   spawned: false },
+    { x: 1400, type: 'zombie', spawned: false },
+    { x: 1600, type: 'zombie', spawned: false },
+    { x: 1800, type: 'crow',   spawned: false },
+    { x: 2000, type: 'zombie', spawned: false },
+    { x: 2100, type: 'crow',   spawned: false },
+    { x: 2300, type: 'zombie', spawned: false },
+    { x: 2500, type: 'redarremer', spawned: false },
+    { x: 2700, type: 'zombie', spawned: false },
+    { x: 2900, type: 'crow',   spawned: false },
+    { x: 3000, type: 'redarremer', spawned: false },
+    { x: 3200, type: 'zombie', spawned: false },
+    { x: 3400, type: 'zombie', spawned: false },
+    { x: 3500, type: 'boss',   spawned: false },
+  ];
+}
+
+function initState() {
+  return {
+    status: 'playing',
+    score: 0,
+    hiscore: parseInt(localStorage.getItem('ghostshi') || '0'),
+    lives: 3,
+    timer: 3000, // countdown in frames (~100 seconds)
+    frameCount: 0,
+    cameraX: 0,
+    platforms: makePlatforms(),
+    spawns: makeEnemySpawns(),
+    player: {
+      x: 80, y: GROUND_Y - 48,
+      vx: 0, vy: 0,
+      w: 20, h: 36,
+      onGround: false,
+      armor: true,    // true=armored false=underwear
+      hitTimer: 0,    // invincible after hit
+      face: 1,        // 1=right -1=left
+      walkFrame: 0,
+      walkTimer: 0,
+      state: 'idle',  // idle walk jump throw die
+      throwTimer: 0,
+      throwCooldown: 0,
+    },
+    enemies: [],
+    weapons: [],    // player's thrown weapons
+    particles: [],
+    bossActive: false,
+    boss: null,
+    levelEnd: 3600, // world x to win
+    won: false,
+  };
+}
+
+// ── Physics helpers ──────────────────────────────────
+function platformsAt(x, y, w, h, platforms) {
+  return platforms.filter(p =>
+    x + w/2 > p.x && x - w/2 < p.x + p.w &&
+    y + h/2 >= p.y && y + h/2 <= p.y + p.h + 8
+  );
+}
+
+function solidBelow(x, y, w, h, platforms) {
+  return platforms.some(p =>
+    x + w/2 - 4 > p.x && x - w/2 + 4 < p.x + p.w &&
+    y + h/2 >= p.y - 2 && y + h/2 <= p.y + p.h
+  );
+}
+
+// ── Spawn enemies ────────────────────────────────────
+function spawnEnemy(type, wx) {
+  const base = { hp: 1, invincible: 0, age: 0, dead: false };
+  if (type === 'zombie') {
+    return { ...base, type, x: wx, y: GROUND_Y - 40, vx: -0.8, vy: 0, w: 22, h: 40,
+      onGround: false, walkFrame: 0, walkTimer: 0, score: 100 };
+  } else if (type === 'crow') {
+    return { ...base, type, x: wx, y: 100 + Math.random() * 100, vx: -2, vy: 0,
+      w: 24, h: 18, flapTimer: 0, score: 200 };
+  } else if (type === 'redarremer') {
+    return { ...base, hp: 3, type, x: wx, y: GROUND_Y - 50, vx: 0, vy: 0,
+      w: 26, h: 36, phase: 'ground', phaseTimer: 0, score: 500 };
+  } else if (type === 'boss') {
+    state.bossActive = true;
+    state.boss = { hp: 20, maxHp: 20, x: wx, y: GROUND_Y - 70, vx: -1.5, vy: 0,
+      w: 60, h: 70, onGround: false, invincible: 0, phase: 0, phaseTimer: 0,
+      fireTimer: 0, fireRate: 80, score: 5000 };
+    return null;
+  }
+}
+
+// ── Update ───────────────────────────────────────────
+function update() {
+  if (state.status !== 'playing') return;
+  const p = state.player;
+  state.frameCount++;
+  state.timer = Math.max(0, state.timer - 1);
+  if (state.timer === 0) playerDie();
+
+  // Spawn checks
+  const camRight = state.cameraX + GW + 200;
+  state.spawns.forEach(s => {
+    if (!s.spawned && s.x < camRight && s.x > state.cameraX - 100) {
+      s.spawned = true;
+      const e = spawnEnemy(s.type, s.x);
+      if (e) state.enemies.push(e);
+    }
+  });
+
+  // ── Player ───────────────────────────────────────
+  if (p.hitTimer > 0) p.hitTimer--;
+  if (p.throwCooldown > 0) p.throwCooldown--;
+
+  // Horizontal movement
+  const wasMoving = p.state === 'walk';
+  let moving = false;
+  if (p.state !== 'die') {
+    if (keys['ArrowLeft'])  { p.vx = -3; p.face = -1; moving = true; }
+    else if (keys['ArrowRight']) { p.vx = 3;  p.face =  1; moving = true; }
+    else p.vx *= 0.7;
+
+    // Jump
+    const wantsJump = keys['ArrowUp'] || keys['KeyZ'];
+    if (wantsJump && !jumpPressed && p.onGround) {
+      p.vy = JUMP_FORCE;
+      p.onGround = false;
+      jumpPressed = true;
+    }
+    if (!wantsJump) jumpPressed = false;
+
+    // Throw weapon
+    if ((keys['KeyX'] || keys['Space']) && p.throwCooldown <= 0 && p.state !== 'die') {
+      p.throwCooldown = 35;
+      state.weapons.push({
+        x: p.x + p.face * 14,
+        y: p.y - p.h * 0.4,
+        vx: p.face * 8,
+        vy: 0,
+        w: 16, h: 8,
+        age: 0,
+        dead: false,
+      });
+    }
+  }
+
+  // Gravity
+  p.vy += GRAVITY;
+  if (p.vy > 14) p.vy = 14;
+
+  // Move X
+  p.x += p.vx;
+  p.x = Math.max(state.cameraX + p.w/2, p.x); // can't go behind camera
+
+  // Move Y
+  p.y += p.vy;
+
+  // Platform collision (Y)
+  p.onGround = false;
+  state.platforms.forEach(pl => {
+    // Landing
+    if (p.x + p.w/2 - 4 > pl.x && p.x - p.w/2 + 4 < pl.x + pl.w) {
+      const bottom = p.y + p.h/2;
+      const wasAbove = (p.y - p.vy) + p.h/2 <= pl.y + 2;
+      if (wasAbove && bottom >= pl.y && bottom <= pl.y + pl.h && p.vy >= 0) {
+        p.y = pl.y - p.h/2;
+        p.vy = 0;
+        p.onGround = true;
+      }
+    }
+  });
+
+  // State machine
+  if (p.state !== 'die') {
+    if (!p.onGround) p.state = 'jump';
+    else if (moving) {
+      p.state = 'walk';
+      p.walkTimer++;
+      if (p.walkTimer > 8) { p.walkFrame = (p.walkFrame + 1) % 2; p.walkTimer = 0; }
+    } else {
+      p.state = 'idle';
+    }
+    if (p.throwCooldown > 25) p.state = 'throw';
+  }
+
+  // Camera follows player
+  const targetCamX = p.x - GW * 0.3;
+  state.cameraX = Math.max(0, Math.min(targetCamX, state.levelEnd - GW));
+  state.cameraX += (targetCamX - state.cameraX) * 0.08;
+
+  // ── Weapons ──────────────────────────────────────
+  state.weapons = state.weapons.filter(w => {
+    if (w.dead) return false;
+    w.x += w.vx;
+    w.age++;
+    // Off screen
+    if (w.x < state.cameraX - 50 || w.x > state.cameraX + GW + 50) return false;
+    if (w.age > 80) return false;
+    // Hit enemy
+    state.enemies.forEach(e => {
+      if (e.dead || e.invincible > 0) return;
+      if (rectsOverlap(w, e, w.w, w.h, e.w, e.h)) {
+        w.dead = true;
+        e.hp--;
+        e.invincible = 12;
+        if (e.hp <= 0) {
+          e.dead = true;
+          state.score += e.score;
+          explode(e.x, e.y, 8);
+        } else {
+          explode(w.x, w.y, 4);
+        }
+      }
+    });
+    // Hit boss
+    if (!w.dead && state.boss && state.boss.invincible <= 0) {
+      if (rectsOverlap(w, state.boss, w.w, w.h, state.boss.w, state.boss.h)) {
+        w.dead = true;
+        state.boss.hp--;
+        state.boss.invincible = 10;
+        explode(w.x, w.y, 5);
+        if (state.boss.hp <= 0) {
+          state.score += state.boss.score;
+          explode(state.boss.x, state.boss.y, 30);
+          for (let i = 0; i < 5; i++) setTimeout(() => {
+            if (state.boss) explode(
+              state.boss.x + (Math.random()-.5)*state.boss.w,
+              state.boss.y + (Math.random()-.5)*state.boss.h, 12);
+          }, i * 150);
+          state.boss = null;
+          state.bossActive = false;
+          setTimeout(() => stageClear(), 1200);
+        }
+      }
+    }
+    return !w.dead;
+  });
+
+  // ── Enemies ───────────────────────────────────────
+  state.enemies = state.enemies.filter(e => {
+    if (e.dead) return false;
+    if (e.invincible > 0) e.invincible--;
+    e.age++;
+    updateEnemy(e);
+    return e.x > state.cameraX - 200 && e.x < state.cameraX + GW + 200;
+  });
+
+  // ── Boss ──────────────────────────────────────────
+  if (state.boss) updateBoss();
+
+  // ── Player hit by enemy ───────────────────────────
+  if (p.hitTimer <= 0 && p.state !== 'die') {
+    let hit = false;
+    state.enemies.forEach(e => {
+      if (!e.dead && rectsOverlap(p, e, p.w * 0.7, p.h * 0.7, e.w * 0.7, e.h * 0.7)) hit = true;
+    });
+    if (state.boss && rectsOverlap(p, state.boss, p.w*0.7, p.h*0.7, state.boss.w*0.7, state.boss.h*0.7)) hit = true;
+    if (hit) {
+      if (p.armor) {
+        p.armor = false;
+        p.hitTimer = 90;
+        explode(p.x, p.y, 8);
+      } else {
+        playerDie();
+      }
+    }
+  }
+
+  // ── Particles ─────────────────────────────────────
+  state.particles = state.particles.filter(pt => {
+    pt.x += pt.vx; pt.y += pt.vy;
+    pt.vy += 0.15;
+    pt.vx *= 0.95;
+    pt.life--;
+    return pt.life > 0;
+  });
+
+  // Win condition
+  if (p.x > state.levelEnd && !state.won) stageClear();
+}
+
+function updateEnemy(e) {
+  const px = state.player.x, py = state.player.y;
+  if (e.type === 'zombie') {
+    e.vy += GRAVITY;
+    if (e.vy > 14) e.vy = 14;
+    e.y += e.vy;
+    // Platform collision
+    e.onGround = false;
+    state.platforms.forEach(pl => {
+      if (e.x + e.w/2 - 4 > pl.x && e.x - e.w/2 + 4 < pl.x + pl.w) {
+        const bottom = e.y + e.h/2;
+        const prevBottom = bottom - e.vy;
+        if (prevBottom <= pl.y + 2 && bottom >= pl.y && e.vy >= 0) {
+          e.y = pl.y - e.h/2;
+          e.vy = 0;
+          e.onGround = true;
+        }
+      }
+    });
+    if (e.onGround) {
+      const dir = px < e.x ? -1 : 1;
+      e.vx = dir * 0.8;
+      e.x += e.vx;
+      e.walkTimer = (e.walkTimer || 0) + 1;
+      if (e.walkTimer > 12) { e.walkFrame = ((e.walkFrame||0) + 1) % 2; e.walkTimer = 0; }
+    }
+  } else if (e.type === 'crow') {
+    // Fly toward player
+    const dx = px - e.x, dy = py - 60 - e.y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    e.vx += dx / dist * 0.12 - e.vx * 0.02;
+    e.vy += dy / dist * 0.12 - e.vy * 0.02;
+    const spd = Math.sqrt(e.vx*e.vx + e.vy*e.vy);
+    if (spd > 3) { e.vx = e.vx/spd*3; e.vy = e.vy/spd*3; }
+    e.x += e.vx; e.y += e.vy;
+    e.flapTimer = (e.flapTimer||0) + 1;
+  } else if (e.type === 'redarremer') {
+    e.phaseTimer++;
+    if (e.phase === 'ground') {
+      // Wait then jump
+      if (e.phaseTimer > 60) {
+        e.phase = 'fly';
+        e.phaseTimer = 0;
+        const dx = px - e.x, dy = py - e.y;
+        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        e.vx = dx/dist * 4;
+        e.vy = dy/dist * 4 - 3;
+      }
+    } else {
+      e.x += e.vx;
+      e.y += e.vy;
+      e.vy += 0.08;
+      e.y = Math.max(40, e.y);
+      if (e.y >= GROUND_Y - e.h/2 && e.vy > 0) {
+        e.y = GROUND_Y - e.h/2;
+        e.vy = 0;
+        e.vx = 0;
+        e.phase = 'ground';
+        e.phaseTimer = 0;
+      }
+    }
+  }
+}
+
+function updateBoss() {
+  const boss = state.boss;
+  const p = state.player;
+  if (boss.invincible > 0) boss.invincible--;
+
+  boss.vy += GRAVITY;
+  if (boss.vy > 14) boss.vy = 14;
+  boss.y += boss.vy;
+
+  state.platforms.forEach(pl => {
+    if (boss.x + boss.w/2 - 8 > pl.x && boss.x - boss.w/2 + 8 < pl.x + pl.w) {
+      const bottom = boss.y + boss.h/2;
+      const prevB = bottom - boss.vy;
+      if (prevB <= pl.y + 2 && bottom >= pl.y && boss.vy >= 0) {
+        boss.y = pl.y - boss.h/2;
+        boss.vy = 0;
+        boss.onGround = true;
+      }
+    }
+  });
+
+  boss.phaseTimer++;
+  if (boss.phaseTimer > 200) {
+    boss.phase = (boss.phase + 1) % 3;
+    boss.phaseTimer = 0;
+  }
+
+  if (boss.phase === 0) {
+    const dir = p.x < boss.x ? -1 : 1;
+    boss.vx += dir * 0.05;
+    boss.vx = Math.max(-2.5, Math.min(2.5, boss.vx));
+    boss.x += boss.vx;
+  } else if (boss.phase === 1) {
+    if (boss.onGround && boss.phaseTimer === 10) {
+      boss.vy = JUMP_FORCE * 1.3;
+      boss.vx = (p.x - boss.x > 0 ? 1 : -1) * 3;
+    }
+    boss.x += boss.vx;
+    boss.vx *= 0.98;
+  } else {
+    boss.vx = 0;
+    boss.x += Math.sin(boss.phaseTimer * 0.05) * 3;
+  }
+
+  // Boss fire
+  boss.fireTimer--;
+  if (boss.fireTimer <= 0) {
+    boss.fireTimer = boss.fireRate;
+    const dx = p.x - boss.x, dy = p.y - boss.y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    state.enemies.push({
+      type: 'crow', x: boss.x, y: boss.y - 20,
+      vx: dx/dist * 3, vy: dy/dist * 3 - 1,
+      w: 20, h: 14, hp: 1, invincible: 0, age: 0, dead: false,
+      flapTimer: 0, score: 0,
+    });
+  }
+
+  boss.x = Math.max(state.cameraX + 50, Math.min(state.cameraX + GW - 80, boss.x));
+}
+
+function playerDie() {
+  const p = state.player;
+  p.state = 'die';
+  explode(p.x, p.y, 20);
+  state.lives--;
+  setTimeout(() => {
+    if (state.lives <= 0) {
+      state.status = 'gameover';
+      if (localStorage) localStorage.setItem('ghostshi', Math.max(state.score, state.hiscore));
+      showOverlay('GAME OVER', `SCORE: ${state.score}`, 'RETRY');
+    } else {
+      // Respawn
+      p.x = state.cameraX + 80;
+      p.y = GROUND_Y - 48;
+      p.vx = 0; p.vy = 0;
+      p.armor = true;
+      p.hitTimer = 120;
+      p.state = 'idle';
+    }
+  }, 1200);
+}
+
+function stageClear() {
+  if (state.won) return;
+  state.won = true;
+  state.status = 'won';
+  if (localStorage) localStorage.setItem('ghostshi', Math.max(state.score, state.hiscore));
+  showOverlay('STAGE CLEAR!', `SCORE: ${state.score}`, 'PLAY AGAIN');
+}
+
+function explode(x, y, count) {
+  const colors = ['#ff0','#ff8800','#f44','#fff','#f80'];
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2, s = Math.random() * 5 + 1;
+    state.particles.push({
+      x, y,
+      vx: Math.cos(a)*s, vy: Math.sin(a)*s - 2,
+      life: 25 + Math.random()*20,
+      maxLife: 45,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      size: Math.random() * 5 + 2,
+    });
+  }
+}
+
+function rectsOverlap(a, b, aw, ah, bw, bh) {
+  return Math.abs(a.x - b.x) < (aw + bw) / 2 &&
+         Math.abs(a.y - b.y) < (ah + bh) / 2;
+}
+
+// ── Render ───────────────────────────────────────────
+function render() {
+  ctx.save();
+  ctx.translate(-state.cameraX, 0);
+  drawBackground();
+  drawPlatforms();
+  drawWeapons();
+  drawEnemies();
+  if (state.boss) drawBoss();
+  drawPlayer();
+  state.particles.forEach(pt => {
+    ctx.globalAlpha = pt.life / pt.maxLife;
+    ctx.fillStyle = pt.color;
+    ctx.fillRect(pt.x - pt.size/2, pt.y - pt.size/2, pt.size, pt.size);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  drawHUD();
+}
+
+function drawBackground() {
+  const camX = state.cameraX;
+  const W = GW + camX + 200;
+
+  // Sky gradient
+  const sky = ctx.createLinearGradient(camX, 0, camX, GH * 0.7);
+  sky.addColorStop(0, '#08001a');
+  sky.addColorStop(1, '#1a0035');
+  ctx.fillStyle = sky;
+  ctx.fillRect(camX, 0, GW + 100, GH * 0.7);
+
+  // Moon
+  ctx.fillStyle = '#ffe060';
+  ctx.beginPath();
+  ctx.arc(camX + GW * 0.78, 60, 38, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#cc9400';
+  ctx.beginPath();
+  ctx.arc(camX + GW * 0.78 + 14, 50, 28, 0, Math.PI*2);
+  ctx.fill();
+
+  // Stars (parallax: 0.1x camera scroll)
+  ctx.fillStyle = '#fff';
+  for (let i = 0; i < 40; i++) {
+    const sx = ((i * 173 % GW) + camX * 0.1) % (GW + 100) + camX;
+    const sy = (i * 97) % (GH * 0.55);
+    const flicker = Math.sin(state.frameCount * 0.05 + i * 2.1) * 0.4 + 0.6;
+    ctx.globalAlpha = flicker;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+
+  // Far background hills (parallax 0.3)
+  ctx.fillStyle = '#1a0030';
+  for (let i = 0; i < 8; i++) {
+    const hx = (i * 280 - camX * 0.3) % (GW + 400) + camX - 100;
+    ctx.beginPath();
+    ctx.arc(hx, GH * 0.68, 90 + i % 3 * 30, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Ground background (dark dirt)
+  const ground = ctx.createLinearGradient(0, GH * 0.7, 0, GH);
+  ground.addColorStop(0, '#2a1500');
+  ground.addColorStop(1, '#140a00');
+  ctx.fillStyle = ground;
+  ctx.fillRect(camX, GH * 0.7, GW + 100, GH * 0.3);
+
+  // Gravestones in background (parallax 0.5)
+  for (let i = 0; i < 20; i++) {
+    const gx = (i * 180 - camX * 0.5) % (state.levelEnd + 400) + camX;
+    if (gx < camX - 50 || gx > camX + GW + 50) continue;
+    const gy = GROUND_Y - 5;
+    const gh = 35 + i % 3 * 12;
+    const gw = gh * 0.55;
+    ctx.fillStyle = '#3a2200';
+    ctx.fillRect(gx - gw/2, gy - gh, gw, gh);
+    ctx.fillStyle = '#4a3000';
+    ctx.beginPath();
+    ctx.arc(gx, gy - gh, gw/2, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#2a1500';
+    ctx.font = `bold ${gh*0.25}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('RIP', gx, gy - gh * 0.45);
+    ctx.textAlign = 'left';
+  }
+}
+
+function drawPlatforms() {
+  state.platforms.forEach(p => {
+    // Top grass
+    ctx.fillStyle = '#4a2800';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = '#2a5a00';
+    ctx.fillRect(p.x, p.y, p.w, 8);
+    // Texture lines
+    ctx.fillStyle = '#3a1800';
+    for (let tx = p.x + 8; tx < p.x + p.w; tx += 20) {
+      ctx.fillRect(tx, p.y + 10, 2, p.h - 12);
+    }
+  });
+}
+
+function drawPlayer() {
+  const p = state.player;
+  if (p.hitTimer > 0 && Math.floor(p.hitTimer / 4) % 2 === 0) return;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.scale(p.face, 1);
+
+  const h = p.h, w = p.w;
+
+  if (p.state === 'die') {
+    // Death animation - bones flying
+    const age = p.age || 0;
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = Math.max(0, 1 - age / 40);
+    ctx.fillRect(-w/2, -h/2, w, h);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    return;
+  }
+
+  if (p.armor) {
+    // ─ Armored Arthur ─
+    // Helmet
+    ctx.fillStyle = '#bbbbbb';
+    ctx.fillRect(-9, -h/2, 18, 10);
+    ctx.fillStyle = '#999';
+    ctx.fillRect(-7, -h/2 + 10, 14, 3);
+    // Face
+    ctx.fillStyle = '#f0c870';
+    ctx.fillRect(-6, -h/2 + 13, 12, 9);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(-4, -h/2 + 15, 3, 3);
+    ctx.fillRect(1, -h/2 + 15, 3, 3);
+    // Body armor
+    ctx.fillStyle = '#c0c0c0';
+    ctx.fillRect(-9, -h/2 + 22, 18, 14);
+    // Shoulder guards
+    ctx.fillStyle = '#aaa';
+    ctx.fillRect(-12, -h/2 + 22, 5, 8);
+    ctx.fillRect(7, -h/2 + 22, 5, 8);
+    // Belt/waist
+    ctx.fillStyle = '#888';
+    ctx.fillRect(-9, -h/2 + 35, 18, 4);
+    // Legs
+    const legOff = p.walkFrame === 0 ? 0 : 2;
+    ctx.fillStyle = '#c8a000';
+    ctx.fillRect(-8, -h/2 + 39, 7, 13 + (p.walkFrame === 1 ? -3 : 0));
+    ctx.fillRect(1, -h/2 + 39, 7, 13 + (p.walkFrame === 0 ? -3 : 0));
+    // Boots
+    ctx.fillStyle = '#804000';
+    ctx.fillRect(-9, -h/2 + 48, 9, 6);
+    ctx.fillRect(0, -h/2 + 48, 9, 6);
+    // Shield (when not throwing)
+    if (p.state !== 'throw') {
+      ctx.fillStyle = '#c8a000';
+      ctx.fillRect(-14, -h/2 + 24, 7, 12);
+      ctx.fillStyle = '#a08000';
+      ctx.fillRect(-13, -h/2 + 26, 5, 8);
+    }
+  } else {
+    // ─ Underwear Arthur ─
+    // Head
+    ctx.fillStyle = '#f0c870';
+    ctx.fillRect(-7, -h/2, 14, 14);
+    ctx.fillStyle = '#c0a050';
+    ctx.fillRect(-5, -h/2, 10, 4); // hair
+    ctx.fillStyle = '#000';
+    ctx.fillRect(-4, -h/2 + 5, 3, 3);
+    ctx.fillRect(1, -h/2 + 5, 3, 3);
+    // Body (skin)
+    ctx.fillStyle = '#f0c870';
+    ctx.fillRect(-7, -h/2 + 14, 14, 14);
+    // Underwear
+    ctx.fillStyle = '#ff8888';
+    ctx.fillRect(-8, -h/2 + 27, 16, 12);
+    // Polka dots on underwear
+    ctx.fillStyle = '#ff4444';
+    for (const [dx,dy] of [[-3,3],[2,3],[-1,7],[3,8]]) {
+      ctx.fillRect(dx, -h/2 + 27 + dy, 3, 3);
+    }
+    // Legs (skin)
+    ctx.fillStyle = '#f0c870';
+    const legOff2 = p.walkFrame === 0 ? 0 : 3;
+    ctx.fillRect(-7, -h/2 + 39, 6, 13 - legOff2);
+    ctx.fillRect(1, -h/2 + 39, 6, 13 - (3 - legOff2));
+  }
+
+  // Throw pose arm
+  if (p.state === 'throw') {
+    ctx.fillStyle = p.armor ? '#c0c0c0' : '#f0c870';
+    ctx.fillRect(7, -h/2 + 22, 10, 6);
+  }
+
+  ctx.restore();
+}
+
+function drawEnemies() {
+  state.enemies.forEach(e => {
+    if (e.dead) return;
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    ctx.globalAlpha = e.invincible > 0 && Math.floor(e.invincible/3) % 2 ? 0.4 : 1;
+
+    if (e.type === 'zombie') {
+      // Body
+      ctx.fillStyle = '#5a8a5a';
+      ctx.fillRect(-e.w/2, -e.h/2, e.w, e.h * 0.55);
+      // Head
+      ctx.fillStyle = '#7aaa7a';
+      ctx.fillRect(-8, -e.h/2 - 16, 16, 16);
+      // Eyes
+      ctx.fillStyle = '#ff0';
+      ctx.fillRect(-5, -e.h/2 - 12, 3, 4);
+      ctx.fillRect(2, -e.h/2 - 12, 3, 4);
+      // Arms outstretched
+      const walkF = e.walkFrame || 0;
+      ctx.fillStyle = '#5a8a5a';
+      ctx.fillRect(walkF === 0 ? -e.w/2-10 : -e.w/2-6, -e.h/2 + 4, walkF === 0 ? 10 : 6, 8);
+      ctx.fillRect(e.w/2, -e.h/2 + 4, walkF === 0 ? 6 : 10, 8);
+      // Legs
+      ctx.fillStyle = '#3a4a3a';
+      ctx.fillRect(-e.w/2, -e.h/2 + e.h*0.55, e.w*0.4, e.h*0.45);
+      ctx.fillRect(e.w/2 - e.w*0.4, -e.h/2 + e.h*0.55, e.w*0.4, e.h*0.45);
+    } else if (e.type === 'crow') {
+      const flap = Math.sin((e.flapTimer||0) * 0.3);
+      ctx.fillStyle = '#222';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, e.w/2, e.h/2, 0, 0, Math.PI*2);
+      ctx.fill();
+      // Wings
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-e.w*0.8, flap * e.h * 0.8);
+      ctx.lineTo(-e.w*0.3, e.h*0.2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(e.w*0.8, flap * e.h * 0.8);
+      ctx.lineTo(e.w*0.3, e.h*0.2);
+      ctx.fill();
+      ctx.fillStyle = '#ff0';
+      ctx.fillRect(e.w*0.3, -3, 6, 4);
+    } else if (e.type === 'redarremer') {
+      // Demonic flying creature
+      ctx.fillStyle = '#cc2200';
+      ctx.fillRect(-13, -18, 26, 28);
+      ctx.fillStyle = '#ff4400';
+      ctx.fillRect(-10, -28, 20, 12);
+      // Wings
+      ctx.fillStyle = '#880000';
+      ctx.beginPath();
+      ctx.moveTo(-13, -10);
+      ctx.lineTo(-32, -22);
+      ctx.lineTo(-13, 0);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(13, -10);
+      ctx.lineTo(32, -22);
+      ctx.lineTo(13, 0);
+      ctx.fill();
+      // Eyes
+      ctx.fillStyle = '#ff0';
+      ctx.fillRect(-7, -26, 5, 5);
+      ctx.fillRect(2, -26, 5, 5);
+      ctx.fillStyle = '#f00';
+      ctx.fillRect(-5, -24, 3, 3);
+      ctx.fillRect(4, -24, 3, 3);
+      // Horns
+      ctx.fillStyle = '#cc2200';
+      ctx.fillRect(-9, -34, 4, 8);
+      ctx.fillRect(5, -34, 4, 8);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  });
+}
+
+function drawBoss() {
+  const boss = state.boss;
+  ctx.save();
+  ctx.translate(boss.x, boss.y);
+  ctx.globalAlpha = boss.invincible > 0 && Math.floor(boss.invincible/2) % 2 ? 0.4 : 1;
+
+  // Cyclops demon / Satan figure
+  ctx.fillStyle = '#660000';
+  ctx.fillRect(-boss.w/2, -boss.h/2, boss.w, boss.h);
+  // Head
+  ctx.fillStyle = '#880000';
+  ctx.fillRect(-20, -boss.h/2 - 30, 40, 32);
+  // Single eye
+  ctx.fillStyle = '#ff0';
+  ctx.beginPath();
+  ctx.arc(0, -boss.h/2 - 18, 12, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#f00';
+  ctx.beginPath();
+  ctx.arc(0, -boss.h/2 - 18, 6, 0, Math.PI*2);
+  ctx.fill();
+  // Horns
+  ctx.fillStyle = '#440000';
+  ctx.fillRect(-18, -boss.h/2 - 55, 8, 28);
+  ctx.fillRect(10, -boss.h/2 - 55, 8, 28);
+  // Claws
+  ctx.fillStyle = '#440000';
+  ctx.fillRect(-boss.w/2-16, -boss.h/2 + 10, 18, 10);
+  ctx.fillRect(boss.w/2-2, -boss.h/2 + 10, 18, 10);
+  // Tail
+  ctx.strokeStyle = '#660000';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(boss.w/2, boss.h/2 - 10);
+  ctx.quadraticCurveTo(boss.w/2 + 30, boss.h/2 + 20, boss.w/2 + 20, boss.h/2 - 10);
+  ctx.stroke();
+
+  ctx.globalAlpha = 1;
+
+  // HP bar
+  ctx.fillStyle = '#600';
+  ctx.fillRect(-boss.w/2, boss.h/2 + 10, boss.w, 8);
+  ctx.fillStyle = '#f00';
+  ctx.fillRect(-boss.w/2, boss.h/2 + 10, boss.w * (boss.hp / boss.maxHp), 8);
+
+  ctx.restore();
+}
+
+function drawWeapons() {
+  state.weapons.forEach(w => {
+    ctx.save();
+    ctx.translate(w.x, w.y);
+    // Lance
+    ctx.fillStyle = '#aaaaaa';
+    ctx.fillRect(-w.w/2, -w.h/2, w.w, w.h);
+    // Tip
+    ctx.fillStyle = '#cccccc';
+    ctx.beginPath();
+    const tipDir = w.vx > 0 ? 1 : -1;
+    ctx.moveTo(w.w/2 * tipDir, 0);
+    ctx.lineTo(w.w/2 * tipDir + 6 * tipDir, -4);
+    ctx.lineTo(w.w/2 * tipDir + 6 * tipDir,  4);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawHUD() {
+  ctx.save();
+  // Top bar
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, 0, GW, 30);
+
+  ctx.fillStyle = '#0f0';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText('SCORE', 8, 12);
+  ctx.fillStyle = '#ff0';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText(String(state.score).padStart(7,'0'), 8, 24);
+
+  ctx.fillStyle = '#0f0';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText('HI', GW/2 - 40, 12);
+  ctx.fillStyle = '#ff0';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText(String(Math.max(state.score, state.hiscore)).padStart(7,'0'), GW/2 - 45, 24);
+
+  // Timer
+  const sec = Math.ceil(state.timer / 30);
+  ctx.fillStyle = sec < 30 ? '#f44' : '#0ff';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText(`TIME ${String(sec).padStart(3,' ')}`, GW - 110, 18);
+
+  // Lives (heart icons)
+  ctx.fillStyle = '#f44';
+  ctx.font = 'bold 14px monospace';
+  for (let i = 0; i < state.lives; i++) {
+    ctx.fillText('♥', GW - 30 - i * 18, GH - 8);
+  }
+
+  // Armor indicator
+  ctx.fillStyle = '#0f0';
+  ctx.font = '10px monospace';
+  ctx.fillText(state.player.armor ? '⚔ ARMOR' : '◉ UNDER', 8, GH - 8);
+
+  // Boss warning
+  if (state.bossActive && state.boss) {
+    if (Math.floor(state.frameCount / 15) % 2) {
+      ctx.fillStyle = '#f00';
+      ctx.font = 'bold 16px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠ DEMON LORD ⚠', GW/2, GH - 8);
+      ctx.textAlign = 'left';
+    }
+  }
+  ctx.restore();
+}
+
+// ── Overlay ──────────────────────────────────────────
+function showOverlay(title, msg, btn) {
+  overlay.innerHTML = `
+    <h1>${title}</h1>
+    <div class="sub">${msg}</div>
+    <button class="start-btn" onclick="startGame()">▶ ${btn}</button>
+    <p style="margin-top:16px;font-size:10px;color:#555"><a href="../index.html" style="color:#555;text-decoration:none">◀ BACK TO MENU</a></p>
+  `;
+  overlay.style.display = 'flex';
+}
+
+// ── Game loop ────────────────────────────────────────
+let lastTime = 0;
+function loop(ts) {
+  if (ts - lastTime < 1000/62) { rafId = requestAnimationFrame(loop); return; }
+  lastTime = ts;
+  update();
+  render();
+  rafId = requestAnimationFrame(loop);
+}
+
+function startGame() {
+  overlay.style.display = 'none';
+  if (rafId) cancelAnimationFrame(rafId);
+  state = initState();
+  rafId = requestAnimationFrame(loop);
+}
+
+// Background render while on overlay
+state = initState();
+(function bgRender() {
+  if (overlay.style.display !== 'none') {
+    state.frameCount++;
+    drawBackground();
+    requestAnimationFrame(bgRender);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RETRO ARCADE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', monospace, sans-serif;
+    overflow: hidden;
+  }
+  /* CRT scanline overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+  .stars {
+    position: fixed; inset: 0;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle linear infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+  .container {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+    max-width: 1000px;
+  }
+  .title-wrap {
+    margin-bottom: 10px;
+  }
+  .title {
+    font-size: clamp(18px, 4vw, 36px);
+    color: #ff0;
+    text-shadow: 0 0 10px #ff0, 0 0 20px #ff0, 4px 4px 0 #a00;
+    letter-spacing: 4px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { text-shadow: 0 0 10px #ff0, 0 0 20px #ff0, 4px 4px 0 #a00; }
+    50% { text-shadow: 0 0 20px #ff0, 0 0 40px #ff8800, 4px 4px 0 #a00; }
+  }
+  .subtitle {
+    font-size: clamp(8px, 1.5vw, 12px);
+    color: #0ff;
+    margin-top: 8px;
+    letter-spacing: 2px;
+  }
+  .coin-text {
+    font-size: clamp(8px, 1.5vw, 12px);
+    color: #fff;
+    margin: 16px 0 30px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .games-grid {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .game-card {
+    cursor: pointer;
+    border: 3px solid #444;
+    background: #111;
+    padding: 0;
+    width: clamp(220px, 38vw, 380px);
+    transition: all 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .game-card:hover {
+    border-color: #ff0;
+    transform: scale(1.03);
+    box-shadow: 0 0 20px #ff0, 0 0 40px rgba(255,255,0,0.3);
+  }
+  .game-card:active { transform: scale(0.98); }
+  .game-preview {
+    width: 100%;
+    aspect-ratio: 3/4;
+    display: block;
+  }
+  .game-1942-preview { aspect-ratio: 3/4; }
+  .game-ghosts-preview { aspect-ratio: 16/9; }
+  .game-info {
+    padding: 12px 16px 16px;
+    background: #0a0a0a;
+    border-top: 2px solid #333;
+  }
+  .game-name {
+    font-size: clamp(10px, 2vw, 16px);
+    color: #ff0;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .game-desc {
+    font-size: clamp(6px, 1.2vw, 9px);
+    color: #0f0;
+    line-height: 1.8;
+  }
+  .game-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: #f00;
+    color: #fff;
+    font-size: 8px;
+    padding: 3px 6px;
+    letter-spacing: 1px;
+  }
+  .controls-hint {
+    margin-top: 30px;
+    font-size: clamp(6px, 1vw, 9px);
+    color: #555;
+    line-height: 2;
+  }
+  .footer {
+    margin-top: 20px;
+    font-size: 7px;
+    color: #333;
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <div class="title-wrap">
+    <div class="title">★ RETRO ARCADE ★</div>
+    <div class="subtitle">CLASSIC GAME COLLECTION</div>
+  </div>
+
+  <div class="coin-text">--- INSERT COIN ---</div>
+
+  <div class="games-grid">
+    <!-- 1942 Card -->
+    <div class="game-card" onclick="launch('1942/index.html')">
+      <div class="game-badge">1P</div>
+      <canvas class="game-preview game-1942-preview" id="preview1942"></canvas>
+      <div class="game-info">
+        <div class="game-name">1942</div>
+        <div class="game-desc">
+          ↑↓←→ : 이동<br>
+          Z / SPACE : 발사<br>
+          X : 롤 (무적)
+        </div>
+      </div>
+    </div>
+
+    <!-- 마계촌 Card -->
+    <div class="game-card" onclick="launch('ghosts/index.html')">
+      <div class="game-badge">1P</div>
+      <canvas class="game-preview game-ghosts-preview" id="previewGhosts"></canvas>
+      <div class="game-info">
+        <div class="game-name">마계촌</div>
+        <div class="game-desc">
+          ←→ : 이동 &nbsp; ↑/Z : 점프<br>
+          X / SPACE : 무기 투척<br>
+          갑옷 → 속옷 → 사망
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls-hint">
+    CLICK OR PRESS ENTER TO SELECT &nbsp;|&nbsp; ESC : BACK TO MENU
+  </div>
+  <div class="footer">© RETRO ARCADE COLLECTION &nbsp;·&nbsp; HTML5 RECREATION</div>
+</div>
+
+<script>
+// Generate starfield
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 120; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const sz = Math.random() * 2.5 + 0.5;
+  s.style.cssText = `
+    width:${sz}px; height:${sz}px;
+    left:${Math.random()*100}%;
+    top:${Math.random()*100}%;
+    animation-duration:${Math.random()*3+1}s;
+    animation-delay:${Math.random()*3}s;
+  `;
+  starsEl.appendChild(s);
+}
+
+function launch(url) {
+  window.location.href = url;
+}
+
+// ─── 1942 Preview Canvas ───────────────────────────────
+(function() {
+  const canvas = document.getElementById('preview1942');
+  const ctx = canvas.getContext('2d');
+  let t = 0;
+  let scrollY = 0;
+
+  function resize() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const enemies = [
+    {x:0.5, y:0.1}, {x:0.3, y:0.15}, {x:0.7, y:0.15},
+    {x:0.2, y:0.25}, {x:0.8, y:0.25}, {x:0.5, y:0.3},
+  ];
+  const bullets = [{x:0.5, y:0.6}, {x:0.5, y:0.45}];
+
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    if (!W || !H) { requestAnimationFrame(draw); t++; return; }
+
+    ctx.fillStyle = '#001133';
+    ctx.fillRect(0,0,W,H);
+
+    // ocean scroll
+    ctx.strokeStyle = 'rgba(0,80,180,0.3)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 20; i++) {
+      const yy = ((i * H/8) + scrollY * 2) % H;
+      ctx.beginPath();
+      ctx.moveTo(0, yy);
+      ctx.lineTo(W, yy);
+      ctx.stroke();
+    }
+    // wave crests
+    ctx.strokeStyle = 'rgba(100,180,255,0.2)';
+    for (let i = 0; i < 8; i++) {
+      const yy = ((i * H/4) + scrollY * 3) % H;
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 10) {
+        const y2 = yy + Math.sin(x * 0.05 + t * 0.03) * 4;
+        if (x === 0) ctx.moveTo(x, y2); else ctx.lineTo(x, y2);
+      }
+      ctx.stroke();
+    }
+
+    // enemy bullets
+    enemies.forEach((e,i) => {
+      if (i % 2 === 0) {
+        const bx = (e.x + Math.sin(t*0.05+i)*0.05) * W;
+        const by = (e.y * H + (t * 0.8 + i * 20) % (H * 0.4));
+        ctx.fillStyle = '#f80';
+        ctx.fillRect(bx-1, by, 2, 6);
+      }
+    });
+
+    // player bullets
+    bullets.forEach((b,i) => {
+      const bx = 0.5 * W;
+      const by = (b.y * H - (t * 1.5 + i * 30) % (H * 0.5) + H) % H;
+      ctx.fillStyle = '#0ff';
+      ctx.fillRect(bx-1, by, 2, 8);
+    });
+
+    // enemies
+    enemies.forEach((e, i) => {
+      const ex = (e.x + Math.sin(t * 0.04 + i * 1.2) * 0.15) * W;
+      const ey = (e.y + Math.sin(t * 0.03 + i * 0.8) * 0.03) * H;
+      drawEnemyPlane(ctx, ex, ey, W * 0.04);
+    });
+
+    // player
+    const px = W * 0.5, py = H * 0.8;
+    drawPlayerPlane(ctx, px, py, W * 0.05);
+
+    // explosions occasional
+    if (t % 80 < 15) {
+      const ex = (0.3 + (t/80|0) % 3 * 0.2) * W;
+      const ey = 0.2 * H + ((t/80|0) % 4) * H * 0.1;
+      const r = (t % 80) / 15;
+      const grad = ctx.createRadialGradient(ex,ey,0,ex,ey,W*0.05*r);
+      grad.addColorStop(0,'rgba(255,255,200,0.9)');
+      grad.addColorStop(0.4,'rgba(255,120,0,0.7)');
+      grad.addColorStop(1,'rgba(255,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(ex,ey,W*0.05*r,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    // HUD
+    ctx.fillStyle = '#0f0';
+    ctx.font = `bold ${W*0.04}px monospace`;
+    ctx.fillText('SCORE', W*0.05, H*0.04);
+    ctx.fillStyle = '#ff0';
+    ctx.fillText('12800', W*0.05, H*0.09);
+
+    scrollY += 0.5;
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  function drawPlayerPlane(ctx, x, y, s) {
+    ctx.fillStyle = '#ddd';
+    ctx.fillRect(x-s*0.5, y-s*1.2, s, s*2.2);
+    ctx.fillStyle = '#aaa';
+    ctx.fillRect(x-s*1.6, y-s*0.3, s*3.2, s*0.6);
+    ctx.fillStyle = '#aaa';
+    ctx.fillRect(x-s*0.8, y+s*0.3, s*1.6, s*0.5);
+    ctx.fillStyle = '#6af';
+    ctx.fillRect(x-s*0.35, y-s, s*0.7, s*0.8);
+  }
+  function drawEnemyPlane(ctx, x, y, s) {
+    ctx.fillStyle = '#c33';
+    ctx.fillRect(x-s*0.5, y-s, s, s*1.8);
+    ctx.fillStyle = '#a00';
+    ctx.fillRect(x-s*1.5, y-s*0.2, s*3, s*0.5);
+    ctx.fillStyle = '#f44';
+    ctx.fillRect(x-s*0.3, y-s*0.8, s*0.6, s*0.6);
+  }
+})();
+
+// ─── 마계촌 Preview Canvas ─────────────────────────────
+(function() {
+  const canvas = document.getElementById('previewGhosts');
+  const ctx = canvas.getContext('2d');
+  let t = 0;
+  let scrollX = 0;
+
+  function resize() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    if (!W || !H) { requestAnimationFrame(draw); t++; return; }
+
+    // Sky gradient
+    const sky = ctx.createLinearGradient(0,0,0,H*0.7);
+    sky.addColorStop(0,'#0a0010');
+    sky.addColorStop(1,'#1a0030');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0,0,W,H*0.7);
+
+    // Moon
+    ctx.fillStyle = '#ffee99';
+    ctx.beginPath();
+    ctx.arc(W*0.82, H*0.18, H*0.1, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#cc9900';
+    ctx.beginPath();
+    ctx.arc(W*0.85, H*0.15, H*0.07, 0, Math.PI*2);
+    ctx.fill();
+
+    // Stars
+    ctx.fillStyle = '#fff';
+    [[0.1,0.1],[0.25,0.07],[0.45,0.15],[0.6,0.05],[0.15,0.2]].forEach(([sx,sy]) => {
+      const flicker = Math.sin(t*0.05 + sx*10) * 0.5 + 0.5;
+      ctx.globalAlpha = 0.3 + flicker * 0.7;
+      ctx.fillRect(sx*W, sy*H, 2, 2);
+    });
+    ctx.globalAlpha = 1;
+
+    // Ground
+    const ground = ctx.createLinearGradient(0,H*0.7,0,H);
+    ground.addColorStop(0,'#2a1800');
+    ground.addColorStop(1,'#1a0f00');
+    ctx.fillStyle = ground;
+    ctx.fillRect(0,H*0.7,W,H*0.3);
+
+    // Ground line
+    ctx.fillStyle = '#4a2800';
+    ctx.fillRect(0,H*0.68,W,H*0.04);
+
+    // Gravestones scrolling
+    const graves = [0.15, 0.4, 0.65, 0.88, 1.12];
+    graves.forEach(gx => {
+      const rx = ((gx * W - scrollX * 0.3) % (W + 60) + W + 60) % (W + 60) - 30;
+      drawGravestone(ctx, rx, H*0.65, H*0.12);
+    });
+
+    // Zombie
+    const zx = W * 0.7 - (t % 200) * 0.3;
+    if (zx > 0 && zx < W) drawZombie(ctx, zx, H*0.67, H*0.1);
+
+    // Crow flying
+    const crowX = (t * 0.8) % (W + 60) - 30;
+    const crowY = H * 0.25 + Math.sin(t * 0.04) * H * 0.05;
+    drawCrow(ctx, crowX, crowY, H * 0.05);
+
+    // Arthur
+    const ax = W * 0.3;
+    const ay = H * 0.67;
+    drawArthur(ctx, ax, ay, H*0.12, t);
+
+    // Lance in air
+    if (t % 60 < 45) {
+      const lx = ax + (t % 60) * W * 0.008;
+      ctx.fillStyle = '#888';
+      ctx.save();
+      ctx.translate(lx, ay - H*0.04);
+      ctx.fillRect(-H*0.06, -2, H*0.12, 4);
+      // tip
+      ctx.fillStyle = '#aaa';
+      ctx.beginPath();
+      ctx.moveTo(H*0.06, -4);
+      ctx.lineTo(H*0.09, 0);
+      ctx.lineTo(H*0.06, 4);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // HUD
+    ctx.fillStyle = '#0f0';
+    ctx.font = `bold ${W*0.035}px monospace`;
+    ctx.fillText('SCORE', W*0.03, H*0.07);
+    ctx.fillStyle = '#ff0';
+    ctx.fillText('08500', W*0.03, H*0.14);
+    ctx.fillStyle = '#f44';
+    ctx.fillText('♥♥♥', W*0.72, H*0.07);
+    ctx.fillStyle = '#0ff';
+    ctx.font = `bold ${W*0.03}px monospace`;
+    ctx.fillText('TIME 120', W*0.72, H*0.14);
+
+    scrollX += 0.4;
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  function drawGravestone(ctx, x, y, h) {
+    const w = h * 0.6;
+    ctx.fillStyle = '#555';
+    ctx.fillRect(x - w/2, y - h, w, h);
+    ctx.fillStyle = '#666';
+    ctx.beginPath();
+    ctx.arc(x, y - h, w/2, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#333';
+    ctx.font = `bold ${h*0.3}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('RIP', x, y - h*0.4);
+    ctx.textAlign = 'left';
+  }
+  function drawZombie(ctx, x, y, h) {
+    // body
+    ctx.fillStyle = '#6a9a6a';
+    ctx.fillRect(x - h*0.2, y - h, h*0.4, h*0.6);
+    // head
+    ctx.fillStyle = '#8aba8a';
+    ctx.fillRect(x - h*0.18, y - h*1.35, h*0.36, h*0.35);
+    // arms
+    ctx.fillStyle = '#6a9a6a';
+    ctx.fillRect(x - h*0.45, y - h*0.9, h*0.25, h*0.08);
+    ctx.fillRect(x + h*0.2, y - h*0.9, h*0.25, h*0.08);
+    // legs
+    ctx.fillRect(x - h*0.18, y - h*0.4, h*0.14, h*0.4);
+    ctx.fillRect(x + h*0.04, y - h*0.4, h*0.14, h*0.4);
+  }
+  function drawCrow(ctx, x, y, s) {
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.ellipse(x, y, s*0.8, s*0.35, 0, 0, Math.PI*2);
+    ctx.fill();
+    // wings
+    const flap = Math.sin(t * 0.15) * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - s*1.2, y - s * flap);
+    ctx.lineTo(x - s*0.4, y + s*0.1);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + s*1.2, y - s * flap);
+    ctx.lineTo(x + s*0.4, y + s*0.1);
+    ctx.fill();
+  }
+  function drawArthur(ctx, x, y, h, t) {
+    const frame = Math.floor(t / 8) % 2;
+    // legs
+    ctx.fillStyle = '#c8a000';
+    if (frame === 0) {
+      ctx.fillRect(x - h*0.15, y - h*0.45, h*0.12, h*0.45);
+      ctx.fillRect(x + h*0.03, y - h*0.45, h*0.12, h*0.45);
+    } else {
+      ctx.fillRect(x - h*0.18, y - h*0.35, h*0.12, h*0.45);
+      ctx.fillRect(x + h*0.06, y - h*0.55, h*0.12, h*0.45);
+    }
+    // body/armor
+    ctx.fillStyle = '#c0c0c0';
+    ctx.fillRect(x - h*0.2, y - h, h*0.4, h*0.55);
+    // helmet
+    ctx.fillStyle = '#aaa';
+    ctx.fillRect(x - h*0.18, y - h*1.3, h*0.36, h*0.35);
+    ctx.fillStyle = '#888';
+    ctx.fillRect(x - h*0.14, y - h*1.1, h*0.28, h*0.12);
+    // shield
+    ctx.fillStyle = '#a08000';
+    ctx.fillRect(x - h*0.35, y - h*0.9, h*0.18, h*0.35);
+    // face
+    ctx.fillStyle = '#ffd080';
+    ctx.fillRect(x - h*0.12, y - h*1.22, h*0.24, h*0.2);
+  }
+})();
+</script>
+</body>
+</html>

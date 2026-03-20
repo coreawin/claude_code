@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Web Verify Report - http://121.126.210.2:8000/ko/login</title>
+<style>
+  body { font-family: sans-serif; padding: 24px; background: #f5f5f5; }
+  h1 { color: #333; }
+  .summary { display: flex; gap: 16px; margin-bottom: 24px; }
+  .card { background: white; border-radius: 8px; padding: 16px 24px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  .card h2 { margin: 0 0 4px; font-size: 2rem; }
+  .card p { margin: 0; color: #666; }
+  .pass h2 { color: #22c55e; }
+  .fail h2 { color: #ef4444; }
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  th { background: #1e293b; color: white; padding: 12px 16px; text-align: left; }
+  td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  tr.pass td:first-child { color: #22c55e; font-weight: bold; }
+  tr.fail td:first-child { color: #ef4444; font-weight: bold; }
+  tr:hover td { background: #f8fafc; }
+  img { border-radius: 4px; border: 1px solid #e2e8f0; }
+  .meta { color: #888; font-size: .85rem; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<h1>🌐 Web Verify Report</h1>
+<p class="meta">Target: <b>http://121.126.210.2:8000/ko/login</b> &nbsp;|&nbsp; Generated: 2026. 3. 18. 오후 12:57:56</p>
+
+<div class="summary">
+  <div class="card"><p>Total</p><h2>2</h2></div>
+  <div class="card pass"><p>Pass</p><h2>2</h2></div>
+  <div class="card fail"><p>Fail</p><h2>0</h2></div>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Status</th><th>Step</th><th>Detail</th><th>Screenshot</th><th>Time</th></tr>
+  </thead>
+  <tbody>
+    <tr class="pass">
+    <td>✅ PASS</td>
+    <td>로그인</td>
+    <td>ID: dqsolution | Redirected to: http://121.126.210.2:8000/ko/workspaces</td>
+    <td><a href="screenshots/03_after_login.png" target="_blank"><img src="screenshots/03_after_login.png" width="200"></a></td>
+    <td>오후 12:58:02</td>
+  </tr>
+<tr class="pass">
+    <td>✅ PASS</td>
+    <td>워크스페이스 추가</td>
+    <td>"테스트 입력 워크스페이스" 목록 확인됨</td>
+    <td><a href="screenshots/08_workspace_verify_result.png" target="_blank"><img src="screenshots/08_workspace_verify_result.png" width="200"></a></td>
+    <td>오후 12:58:05</td>
+  </tr>
+  </tbody>
+</table>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "url": "http://121.126.210.2:8000/ko/login",
+  "timestamp": "2026-03-18T03:57:56.932Z",
+  "summary": {
+    "total": 2,
+    "pass": 2,
+    "fail": 0
+  },
+  "steps": [
+    {
+      "name": "로그인",
+      "status": "pass",
+      "detail": "ID: dqsolution | Redirected to: http://121.126.210.2:8000/ko/workspaces",
+      "screenshot": "03_after_login.png",
+      "time": "2026-03-18T03:58:02.816Z"
+    },
+    {
+      "name": "워크스페이스 추가",
+      "status": "pass",
+      "detail": "\"테스트 입력 워크스페이스\" 목록 확인됨",
+      "screenshot": "08_workspace_verify_result.png",
+      "time": "2026-03-18T03:58:05.223Z"
+    }
+  ]
+}

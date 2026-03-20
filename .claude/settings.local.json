@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://121.126.210.2:8000/_next/static/chunks/a9553db16dd602d7.js | grep -oE '\"/[a-zA-Z/\\\\-_]*\\(auth|login|token|signin\\)[a-zA-Z/\\\\-_]*\"' | sort -u | head -20)",
+      "Bash(curl -s -X POST http://121.126.210.2:8000/token/obtain/ \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"username\":\"dqsolution\",\"password\":\"customer3@$#\"}' \\\\\n  -w \"\\\\n\\\\nHTTP Status: %{http_code}\")",
+      "Bash(curl -s -X POST http://121.126.210.2:8000/ko/token/obtain/ \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"username\":\"dqsolution\",\"password\":\"customer3@$#\"}' \\\\\n  -w \"\\\\n\\\\nHTTP Status: %{http_code}\")",
+      "Bash(curl -s http://121.126.210.2:8000/_next/static/chunks/a9553db16dd602d7.js | grep -oE '\"NEXT_PUBLIC[^\"]*\"' | head -20)",
+      "Bash(curl -s http://121.126.210.2:8000/_next/static/chunks/a9553db16dd602d7.js | grep -oE '\"[^\"]*API[^\"]*\"' | sort -u | head -20)",
+      "Bash(curl -s -X POST http://121.126.210.2:8001/token/obtain/ \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"username\":\"dqsolution\",\"password\":\"customer3@$#\"}' \\\\\n  -w \"\\\\n\\\\nHTTP Status: %{http_code}\")",
+      "Bash(curl -s -v -X POST http://121.126.210.2:8001/token/obtain/ \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"username\":\"dqsolution\",\"password\":\"customer3@$#\"}' 2>&1 | grep -E \"\\(Location|< HTTP|{\\)\")",
+      "Bash(curl -s -v -X POST http://121.126.210.2:8001/token/obtain/ \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"username\":\"dqsolution\",\"password\":\"customer3@$#\"}' 2>&1 | grep -E \"Location|HTTP/\")",
+      "Bash(curl -s -X POST http://121.126.210.2:8001/api/token/obtain/ \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"username\":\"dqsolution\",\"password\":\"customer3@$#\"}' \\\\\n  -w \"\\\\nHTTP: %{http_code}\"\n\ncurl -s -X POST \"http://121.126.210.2:8001/en/token/obtain/\" \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"username\":\"dqsolution\",\"password\":\"customer3@$#\"}' \\\\\n  -w \"\\\\nHTTP: %{http_code}\")",
+      "Bash(curl -s http://121.126.210.2:8000/_next/static/chunks/a9553db16dd602d7.js | grep -oE 'baseURL[^,;\\)]{0,100}' | head -10)",
+      "Bash(curl -s http://121.126.210.2:8000/_next/static/chunks/a9553db16dd602d7.js | grep -oE 'external[^;]{0,200}' | grep -i \"base\\\\|url\\\\|http\" | head -10)",
+      "Bash(curl -s http://121.126.210.2:8000/_next/static/chunks/a9553db16dd602d7.js | grep -oE '\"[^\"]*[0-9]{4,5}[^\"]*\"' | grep -E \"http|localhost|127\\\\.|121\\\\.\" | head -10)",
+      "Bash(curl -s -X POST http://121.126.210.2:8010/token/obtain/ \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"username\":\"dqsolution\",\"password\":\"customer3@$#\"}' \\\\\n  -w \"\\\\nHTTP: %{http_code}\")",
+      "Bash(cd \"D:\\\\Claude Code\" && node playwright-test.js 2>&1)",
+      "Bash(cd \"D:/Claude Code\" && node scripts/report.js ./web-verify-report/results.json 2>&1)"
+    ]
+  }
+}

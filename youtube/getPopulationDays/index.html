@@ -314,70 +314,58 @@
     .modal-body p { font-size: 13px; color: #666; }
     .modal-body small { font-size: 11px; color: #444; display: block; margin-top: 6px; }
 
-    /* ── Channel Panel ── */
-    .ch-refresh-btn {
-      background: none; border: none; color: #555; cursor: pointer;
-      font-size: 14px; padding: 2px 6px; border-radius: 3px; margin-left: auto;
+    /* ── Topic Cluster Panel ── */
+    .topic-sort-bar {
+      display: flex; gap: 3px; padding: 6px 10px 5px;
+      border-bottom: 1px solid #1e1e1e;
     }
-    .ch-refresh-btn:hover { color: #aaa; background: #222; }
-    .ch-last-update { font-size: 10px; color: #444; }
+    .topic-sort-btn {
+      background: #222; border: 1px solid #333; color: #888;
+      padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px;
+    }
+    .topic-sort-btn:hover { color: #ccc; background: #2a2a2a; }
+    .topic-sort-btn.active { background: #ff0000; border-color: #ff0000; color: white; font-weight: 700; }
 
-    .channel-card { padding: 10px 0; border-bottom: 1px solid #1e1e1e; }
-    .channel-card:last-child { border-bottom: none; }
-    .ch-header { display: flex; gap: 8px; margin-bottom: 8px; }
-    .ch-thumb {
-      width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
-      background: #222; flex-shrink: 0;
-    }
-    .ch-info { flex: 1; min-width: 0; }
-    .ch-name { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-    .ch-name a { color: #e8e8e8; text-decoration: none; }
-    .ch-name a:hover { color: #ff6666; }
-    .ch-meta { font-size: 10px; color: #666; margin-bottom: 3px; }
-    .ch-tags { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
-    .ch-cat-tag {
-      font-size: 10px; padding: 1px 5px; border-radius: 8px;
-      border: 1px solid #2a2a2a; color: #777; background: #1a1a1a;
-    }
-    .ai-diff-badge { font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 600; }
-    .diff-1 { background: #1a2e1a; border: 1px solid #2a6a2a; color: #6dcc6d; }
-    .diff-2 { background: #2e2a1a; border: 1px solid #6a5a2a; color: #ccbb6d; }
-    .diff-3 { background: #2e2218; border: 1px solid #6a4a2a; color: #cc8844; }
-    .ch-source-tag {
-      font-size: 9px; padding: 1px 5px; border-radius: 8px;
-      background: #1a1a2e; border: 1px solid #2a2a5a; color: #6666bb;
-    }
-    .ch-source-tag.d-src { background: #1e1a2e; border-color: #3a2a5a; color: #8866bb; }
+    .topic-cluster-card { padding: 10px 10px 8px; border-bottom: 1px solid #1e1e1e; }
+    .topic-cluster-card:last-child { border-bottom: none; }
 
-    .ch-videos { }
-    .ch-video-item {
+    .cluster-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .cluster-icon { font-size: 14px; }
+    .cluster-name { font-size: 12px; font-weight: 700; color: #ddd; flex: 1; }
+    .cluster-count {
+      font-size: 10px; color: #666;
+      background: #1e1e1e; border: 1px solid #2a2a2a;
+      padding: 1px 6px; border-radius: 8px;
+    }
+    .cluster-meta { margin-bottom: 6px; }
+    .cluster-avg-eff { font-size: 11px; margin-bottom: 3px; }
+    .cluster-diff-row { display: flex; gap: 4px; flex-wrap: wrap; }
+    .diff-pill { font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 600; }
+    .diff-pill-1 { background: #1a2e1a; border: 1px solid #2a6a2a; color: #6dcc6d; }
+    .diff-pill-2 { background: #2e2a1a; border: 1px solid #6a5a2a; color: #ccbb6d; }
+    .diff-pill-3 { background: #2e2218; border: 1px solid #6a4a2a; color: #cc8844; }
+
+    .cluster-video-item {
       display: flex; gap: 6px; align-items: flex-start;
       padding: 5px 0; border-top: 1px solid #181818;
     }
-    .ch-rank {
+    .cluster-rank {
       font-size: 11px; font-weight: 700; color: #555;
       width: 14px; flex-shrink: 0; padding-top: 2px; text-align: center;
     }
-    .ch-video-thumb {
-      width: 80px; height: 45px; object-fit: cover; border-radius: 3px;
+    .cluster-video-thumb {
+      width: 72px; height: 41px; object-fit: cover; border-radius: 3px;
       background: #222; flex-shrink: 0;
     }
-    .ch-video-info { flex: 1; min-width: 0; }
-    .ch-video-title {
-      font-size: 11px; line-height: 1.3; margin-bottom: 3px;
+    .cluster-video-info { flex: 1; min-width: 0; }
+    .cluster-video-title {
+      font-size: 11px; line-height: 1.3; margin-bottom: 2px;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .ch-video-title a { color: #ccc; text-decoration: none; }
-    .ch-video-title a:hover { color: #ff6666; }
-    .ch-video-stats { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
-    .ch-recency { font-size: 10px; color: #555; }
-    .ch-recency.fresh  { color: #4a9a4a; }
-    .ch-recency.recent { color: #7a7a4a; }
-    .ch-inactive-note {
-      font-size: 10px; color: #444; padding: 6px 0;
-      border-top: 1px solid #181818; text-align: center;
-    }
-    .ch-no-data { text-align: center; padding: 30px 10px; color: #444; font-size: 11px; }
+    .cluster-video-title a { color: #ccc; text-decoration: none; }
+    .cluster-video-title a:hover { color: #ff6666; }
+    .cluster-video-stats { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+    .topic-empty { text-align: center; padding: 30px 10px; color: #444; font-size: 11px; }
 
     /* ── Responsive ── */
     @media (max-width: 720px) {
@@ -698,7 +686,8 @@ function renderTrends(trends, fetchedAt) {
 }
 
 // ── State ────────────────────────────────────────
-let state = { period: 'week', advOpen: false, allVideos: [], sec1Shown: 15, channelData: null, channelLoading: false };
+let state = { period: 'week', advOpen: false, allVideos: [], sec1Shown: 15 };
+let clusterSort = 'eff'; // 'eff' | 'count' | 'easy'
 
 // ── Init ─────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -709,7 +698,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   loadTrends(); // Google Trends 로딩 (캐시 우선)
   renderChips();
-  if (getKey()) { doSearch(); loadChannelPanel(); }
+  if (getKey()) doSearch();
   else {
     document.getElementById('threeCol').innerHTML =
       '<div class="loading-box" style="color:#555;">상단에 API 키를 입력 후 검색하세요.</div>';

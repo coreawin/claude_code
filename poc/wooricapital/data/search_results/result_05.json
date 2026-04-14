@@ -1,0 +1,51 @@
+{
+  "queryId": "result_05",
+  "title": "합리적 가격 국산차",
+  "description": "3~4천만원대 가성비 최고의 국산차 추천",
+  "cars": [
+    {
+      "img": "tucson",
+      "brand": "HYUNDAI",
+      "name": "투싼 하이브리드<br>인스퍼레이션",
+      "spec": "1.6T HEV · 복합 15.6km/L",
+      "price": "2,990만",
+      "sub": "월 할부 약 58만원 (60개월)",
+      "tag": "HEV",
+      "tagC": "tag-h",
+      "highlight": "2천만원대"
+    },
+    {
+      "img": "santafe",
+      "brand": "HYUNDAI",
+      "name": "싼타페 하이브리드<br>캘리그래피",
+      "spec": "1.6T HEV · 7인승 · 복합 14.2km/L",
+      "price": "3,690만",
+      "sub": "월 할부 약 71만원 (60개월)",
+      "tag": "HEV",
+      "tagC": "tag-h",
+      "highlight": "7인승 가성비"
+    },
+    {
+      "img": "sorento",
+      "brand": "KIA",
+      "name": "쏘렌토 하이브리드<br>시그니처",
+      "spec": "1.6T HEV · 7인승 · 복합 16.0km/L",
+      "price": "3,896만",
+      "sub": "월 할부 약 75만원 (60개월)",
+      "tag": "HEV",
+      "tagC": "tag-h",
+      "highlight": "합리적 선택"
+    },
+    {
+      "img": "k8",
+      "brand": "KIA",
+      "name": "K8 3.5 GDI<br>시그니처",
+      "spec": "3.5L GDI · 300마력 · FWD",
+      "price": "4,256만",
+      "sub": "월 할부 약 82만원 (60개월)",
+      "tag": "국산",
+      "tagC": "tag-k",
+      "highlight": "세단 선택"
+    }
+  ]
+}

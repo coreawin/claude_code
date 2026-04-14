@@ -1,0 +1,51 @@
+{
+  "queryId": "result_02",
+  "title": "고성능 퍼포먼스 세단",
+  "description": "드라이빙의 즐거움을 느낄 수 있는 세단들",
+  "cars": [
+    {
+      "img": "g80",
+      "brand": "GENESIS",
+      "name": "G80 3.5T AWD<br>스포츠 패키지",
+      "spec": "3.5L T-GDI · 380마력 · AWD",
+      "price": "7,890만",
+      "sub": "월 할부 약 153만원 (60개월)",
+      "tag": "국산",
+      "tagC": "tag-k",
+      "highlight": "380마력 최고 출력"
+    },
+    {
+      "img": "bmw5",
+      "brand": "BMW",
+      "name": "5시리즈 530i<br>xDrive M스포츠",
+      "spec": "2.0L 터보 · 252마력 · AWD",
+      "price": "8,230만",
+      "sub": "월 할부 약 161만원 (60개월)",
+      "tag": "수입",
+      "tagC": "tag-i",
+      "highlight": "독일의 정통 스포츠"
+    },
+    {
+      "img": "k8",
+      "brand": "KIA",
+      "name": "K8 3.5 GDI<br>시그니처",
+      "spec": "3.5L GDI · 300마력 · FWD",
+      "price": "4,256만",
+      "sub": "월 할부 약 82만원 (60개월)",
+      "tag": "국산",
+      "tagC": "tag-k",
+      "highlight": "300마력 감각"
+    },
+    {
+      "img": "grandeur",
+      "brand": "HYUNDAI",
+      "name": "그랜저 캘리그래피<br>3.5 GDI",
+      "spec": "3.5L GDI · 304마력 · FWD",
+      "price": "4,870만",
+      "sub": "월 할부 약 94만원 (60개월)",
+      "tag": "국산",
+      "tagC": "tag-k",
+      "highlight": "304마력 강력함"
+    }
+  ]
+}

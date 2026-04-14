@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리WON카 — 비회원 AI 에이전트</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap");
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans KR",sans-serif;background:#f4f5f7;font-size:13px;color:#111;}
+
+.topbar{height:36px;background:#f9f9f9;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;justify-content:flex-end;padding:0 24px;gap:8px;font-size:12px;color:#555;}
+.tb-guest{display:inline-flex;align-items:center;gap:5px;border:1px solid #ccc;border-radius:4px;padding:3px 10px;background:#fff;font-size:12px;color:#888;}
+.tb-apply{background:#1a56db;color:#fff;border:none;border-radius:4px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;}
+
+.header{background:#fff;border-bottom:1px solid #e8e8e8;padding:10px 24px;display:flex;align-items:center;}
+.logo{font-size:26px;font-weight:900;letter-spacing:-0.04em;color:#0a1628;margin-right:22px;}
+.logo span{color:#1a56db;}
+.search-bar{flex:1;max-width:500px;border:2px solid #cbd5e1;border-radius:24px;display:flex;align-items:center;padding:7px 18px;}
+.search-bar input{border:none;outline:none;flex:1;font-size:13px;font-family:inherit;color:#333;}
+.search-bar input::placeholder{color:#aaa;}
+.hnav{margin-left:auto;display:flex;gap:24px;}
+.hico{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#666;}
+.hico svg{width:22px;height:22px;}
+
+.page{display:flex;height:calc(100vh - 82px);overflow:hidden;}
+.left{flex:1;overflow-y:auto;padding:18px 20px;}
+.right{width:248px;min-width:248px;background:#fff;border-left:1px solid #e4e4e4;display:flex;flex-direction:column;}
+
+.banner{width:100%;height:210px;border-radius:14px;background:linear-gradient(120deg,#1e3a5f,#2563eb 60%,#60a5fa);position:relative;overflow:hidden;margin-bottom:20px;display:flex;align-items:center;padding:32px 40px;cursor:pointer;transition:filter .2s;}
+.banner:hover{filter:brightness(1.06);}
+.banner h2{font-size:24px;font-weight:900;color:#fff;line-height:1.3;letter-spacing:-0.03em;margin-bottom:6px;}
+.banner p{font-size:12px;color:rgba(255,255,255,.75);margin-bottom:14px;line-height:1.6;}
+.banner-cta{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:6px 18px;font-size:11px;font-weight:700;}
+.banner-deco{position:absolute;right:40px;top:50%;transform:translateY(-50%);font-size:80px;opacity:.13;}
+.banner-hint{position:absolute;bottom:14px;right:20px;font-size:10px;color:rgba(255,255,255,.5);}
+
+.sec-hdr{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.sec-hdr h3{font-size:15px;font-weight:700;color:#0a1628;}
+
+.prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.prod-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .15s;}
+.prod-card:hover{box-shadow:0 6px 20px rgba(26,86,219,.1);transform:translateY(-2px);}
+.pc-img{position:relative;height:155px;background:#000;overflow:hidden;}
+.pc-img img{width:100%;height:100%;object-fit:contain;}
+.pc-tag{position:absolute;top:8px;left:8px;font-size:9px;font-weight:700;border-radius:4px;padding:2px 6px;}
+.tag-k{background:rgba(26,86,219,.25);color:#60a5fa;border:1px solid rgba(96,165,250,.4);}
+.tag-i{background:rgba(255,152,0,.2);color:#fbbf24;border:1px solid rgba(251,191,36,.4);}
+.tag-h{background:rgba(40,199,111,.2);color:#34d399;border:1px solid rgba(52,211,153,.4);}
+.pc-btns{position:absolute;bottom:8px;left:0;right:0;display:flex;gap:5px;padding:0 8px;}
+.pc-btn{flex:1;background:rgba(255,255,255,.9);border:none;border-radius:5px;padding:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;}
+.pc-info{padding:9px 11px 11px;}
+.pc-brand{font-size:10px;color:#aaa;margin-bottom:1px;}
+.pc-name{font-size:12px;font-weight:700;color:#0a1628;margin-bottom:3px;line-height:1.35;}
+.pc-spec{font-size:10px;color:#999;margin-bottom:5px;}
+.pc-price{font-size:14px;font-weight:900;color:#0a1628;}
+
+.rg-top{padding:18px 14px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;}
+.rg-av{width:40px;height:40px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.rg-name{font-size:13px;font-weight:700;color:#475569;}
+.rg-hint{font-size:11px;color:#94a3b8;margin-top:2px;line-height:1.5;}
+.rg-login{margin:12px;background:linear-gradient(90deg,#1a56db,#5a8dee);border:none;border-radius:8px;padding:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;width:calc(100% - 24px);}
+.rg-jt{padding:12px 14px 6px;font-size:12px;font-weight:700;color:#0a1628;}
+.rg-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 14px;gap:8px;color:#94a3b8;}
+.rg-empty-ico{font-size:26px;opacity:.4;}
+.rg-empty-txt{font-size:11px;text-align:center;line-height:1.5;}
+.rg-btm{margin-top:auto;padding:10px 12px;border-top:1px solid #f0f0f0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+.rg-ico{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 2px;border-radius:8px;transition:background .15s;}
+.rg-ico:hover{background:#f0f4ff;}
+.rg-ico-box{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.rg-ico-lbl{font-size:9px;color:#555;text-align:center;line-height:1.3;}
+
+.fab-btn{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7b2ff7,#b44cff);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 20px rgba(123,47,247,.45);z-index:100;transition:transform .2s;}
+.fab-btn:hover{transform:scale(1.08);}
+.fab-label{position:fixed;bottom:35px;right:92px;background:rgba(20,20,30,.85);color:#fff;font-size:12px;font-weight:600;border-radius:22px;padding:8px 16px;white-space:nowrap;z-index:100;cursor:pointer;}
+
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:150;opacity:0;pointer-events:none;transition:opacity .3s;}
+.backdrop.on{opacity:1;pointer-events:all;}
+
+.chat-panel{position:fixed;right:-760px;top:0;width:760px;height:100vh;background:#fff;z-index:200;display:flex;box-shadow:-6px 0 40px rgba(0,0,0,.18);transition:right .38s cubic-bezier(.4,0,.2,1);}
+.chat-panel.open{right:0;}
+
+.cl{flex:1;display:flex;flex-direction:column;min-width:0;}
+.cl-top{padding:14px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.cl-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7b2ff7,#b44cff);display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;flex-shrink:0;}
+.cl-name{font-size:14px;font-weight:700;}
+.cl-status{display:flex;align-items:center;gap:5px;margin-top:2px;}
+.sdot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.stxt{font-size:10px;color:#22c55e;font-weight:600;}
+.cl-close{margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;padding:4px 6px;border-radius:6px;}
+.cl-close:hover{background:#f5f5f5;color:#555;}
+
+/* 프로그레스 바 */
+.cl-progress{padding:10px 20px 0;display:flex;gap:6px;flex-shrink:0;}
+.prog-step{flex:1;height:3px;border-radius:2px;background:#e2e8f0;transition:background .4s;}
+.prog-step.done{background:#7b2ff7;}
+.prog-step.active{background:linear-gradient(90deg,#7b2ff7,#b44cff);}
+.prog-label{font-size:10px;color:#94a3b8;padding:4px 20px 8px;display:flex;justify-content:space-between;}
+.prog-label span{flex:1;text-align:center;}
+.prog-label span.cur{color:#7b2ff7;font-weight:700;}
+
+.cl-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;}
+
+.msg{display:flex;gap:10px;}
+.m-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;align-self:flex-start;margin-top:2px;}
+.av-bot{background:linear-gradient(135deg,#7b2ff7,#b44cff);color:#fff;}
+.av-usr{background:linear-gradient(135deg,#1a56db,#5a8dee);color:#fff;}
+.msg-r{display:flex;flex-direction:column;gap:3px;max-width:80%;}
+.msg-user{flex-direction:row-reverse;}
+.msg-user .msg-r{align-items:flex-end;}
+.bubble{padding:11px 15px;border-radius:16px;font-size:13px;line-height:1.7;}
+.b-bot{background:#f0f2ff;color:#1a1a2e;border-bottom-left-radius:4px;}
+.b-usr{background:linear-gradient(135deg,#1a56db,#3b6fd4);color:#fff;border-bottom-right-radius:4px;}
+.m-time{font-size:10px;color:#c0c4cc;padding:0 4px;}
+
+/* 조건 태그 — 사용자 답변에 붙는 뱃지 */
+.cond-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4);border-radius:12px;padding:2px 10px;font-size:11px;font-weight:700;margin-top:4px;}
+
+.typing-row{display:flex;gap:10px;align-items:flex-start;}
+.typing-bub{padding:12px 16px;background:#f0f2ff;border-radius:16px;border-bottom-left-radius:4px;display:flex;gap:5px;align-items:center;}
+.typing-bub span{width:7px;height:7px;border-radius:50%;background:#7b2ff7;opacity:.6;animation:bounce .9s infinite;}
+.typing-bub span:nth-child(2){animation-delay:.18s;}
+.typing-bub span:nth-child(3){animation-delay:.36s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+
+/* 수집된 조건 요약 박스 */
+.cond-summary{background:linear-gradient(135deg,#f5f3ff,#eef2ff);border:1px solid #ddd6fe;border-radius:12px;padding:12px 14px;font-size:12px;line-height:1.8;}
+.cond-summary .cs-title{font-size:11px;font-weight:700;color:#7b2ff7;margin-bottom:6px;}
+.cond-row{display:flex;align-items:center;gap:6px;color:#374151;}
+.cond-ico{width:18px;text-align:center;}
+.cond-val{font-weight:700;color:#1a1a2e;}
+
+/* 추천 카드 */
+.rec-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.rc{background:#fff;border:1px solid #dde3f8;border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .15s;}
+.rc:hover{box-shadow:0 3px 14px rgba(26,86,219,.15);transform:translateY(-1px);}
+.rc-img{height:100px;background:#000;overflow:hidden;}
+.rc-img img{width:100%;height:100%;object-fit:contain;}
+.rc-info{padding:8px 10px 10px;}
+.rc-brand{font-size:9px;color:#aaa;margin-bottom:1px;}
+.rc-name{font-size:11px;font-weight:700;color:#0a1628;line-height:1.35;margin-bottom:2px;}
+.rc-spec{font-size:9px;color:#999;margin-bottom:4px;}
+.rc-price{font-size:12px;font-weight:900;color:#1a56db;margin-bottom:5px;}
+.rc-btn{width:100%;background:#1a56db;color:#fff;border:none;border-radius:5px;padding:5px 0;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;}
+.rc-btn:hover{background:#1648c2;}
+
+.cl-input{padding:12px 18px;border-top:1px solid #f0f0f0;display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.cl-input input{flex:1;border:1.5px solid #e2e8f0;border-radius:24px;padding:10px 18px;font-size:13px;font-family:inherit;outline:none;transition:border .15s;background:#f5f5f8;color:#aaa;}
+.cl-send{width:40px;height:40px;border-radius:50%;background:#e2e8f0;border:none;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:17px;flex-shrink:0;}
+
+.cr{width:215px;min-width:215px;background:#fafbff;border-left:1px solid #eef0f8;display:flex;flex-direction:column;}
+.cr-hdr{padding:14px 13px 10px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.cr-hdr-t{font-size:12px;font-weight:700;color:#0a1628;}
+.cr-hdr-btn{font-size:10px;color:#94a3b8;cursor:pointer;background:none;border:none;font-family:inherit;}
+.cr-list{flex:1;overflow-y:auto;padding:8px;}
+.cr-item{background:#fff;border:1px solid #eee;border-radius:9px;overflow:hidden;margin-bottom:8px;}
+.cr-item-img{height:80px;background:#000;overflow:hidden;}
+.cr-item-img img{width:100%;height:100%;object-fit:contain;}
+.cr-item-info{padding:6px 9px 8px;}
+.cr-item-brand{font-size:9px;color:#aaa;margin-bottom:1px;}
+.cr-item-name{font-size:10px;font-weight:700;color:#0a1628;line-height:1.3;margin-bottom:2px;}
+.cr-item-price{font-size:11px;font-weight:900;color:#1a56db;}
+.cr-empty-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:8px;color:#d1d5db;}
+.cr-empty-ico{font-size:28px;opacity:.4;}
+.cr-empty-txt{font-size:10px;text-align:center;line-height:1.5;}
+
+.msg-anim{animation:msgIn .3s ease both;}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>기준</span>
+  <div class="tb-guest">👤 비회원</div>
+  <span>비교</span>
+  <div class="tb-guest" style="color:#ccc">—</div>
+  <button class="tb-apply">적용</button>
+</div>
+
+<div class="header">
+  <div class="logo">우리<span>WON</span>카</div>
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="차량을 입력하고 더 깊어진 우리WON카를 경험해 보세요.">
+    <span style="color:#94a3b8;font-size:16px;">🔍</span>
+  </div>
+  <div class="hnav">
+    <div class="hico"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>구매내역</div>
+    <div class="hico"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>나의 찜</div>
+    <div class="hico"><svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>장바구니</div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="left">
+    <!-- 검색 결과 컨테이너 -->
+    <div id="search-results-container" style="display:none;"></div>
+    <!-- 기본 추천 섹션 -->
+    <div id="recommended-section">
+    <div class="banner" onclick="openChat()">
+      <div>
+        <h2>나만의 맞춤 신차,<br>AI가 찾아드립니다</h2>
+        <p>몇 가지 질문으로 고객님께 딱 맞는<br>차량을 바로 추천해드려요.</p>
+        <span class="banner-cta">✨ AI 추천 받기 →</span>
+      </div>
+      <div class="banner-deco">🤖</div>
+      <div class="banner-hint">👆 클릭하면 AI 상담을 시작합니다</div>
+    </div>
+    <div class="sec-hdr">
+      <span style="font-size:15px">✨</span>
+      <h3>요즘 주목 받는 신차 안내</h3>
+    </div>
+    <div class="prod-grid" id="popularGrid"></div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="rg-top">
+      <div class="rg-av">👤</div>
+      <div>
+        <div class="rg-name">비회원</div>
+        <div class="rg-hint">로그인 하시고 더 깊어진<br>우리WON카를 경험하세요.</div>
+      </div>
+    </div>
+    <button class="rg-login">🔑 로그인 / 회원가입</button>
+    <div class="rg-jt">고객 여정</div>
+    <div class="rg-empty">
+      <div class="rg-empty-ico">✨</div>
+      <div class="rg-empty-txt">다이버7이 검색부터 구매까지<br>모든 고객 여정 정보를 수집합니다.</div>
+    </div>
+    <div class="rg-btm">
+      <div class="rg-ico"><div class="rg-ico-box" style="background:linear-gradient(135deg,#4f8ef7,#1a56db)">📊</div><span class="rg-ico-lbl">데이터<br>학습</span></div>
+      <div class="rg-ico"><div class="rg-ico-box" style="background:linear-gradient(135deg,#f7971e,#ffd200)">🔄</div><span class="rg-ico-lbl">데이터<br>초기화</span></div>
+      <div class="rg-ico"><div class="rg-ico-box" style="background:linear-gradient(135deg,#667eea,#764ba2)">⚙️</div><span class="rg-ico-lbl">관리자<br>도구</span></div>
+      <div class="rg-ico" onclick="openChat()"><div class="rg-ico-box" style="background:linear-gradient(135deg,#7b2ff7,#b44cff)">🤖</div><span class="rg-ico-lbl">AI 쇼핑<br>에이전트</span></div>
+    </div>
+  </div>
+</div>
+
+<button class="fab-btn" onclick="openChat()">🤖</button>
+<div class="fab-label" onclick="openChat()">무엇을 도와드릴까요?</div>
+
+<div class="backdrop" id="backdrop" onclick="closeChat()"></div>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="cl">
+    <div class="cl-top">
+      <div class="cl-av">🤖</div>
+      <div>
+        <div class="cl-name">AI 쇼핑에이전트</div>
+        <div class="cl-status"><div class="sdot"></div><span class="stxt">온라인</span></div>
+      </div>
+      <button class="cl-close" onclick="closeChat()">✕</button>
+    </div>
+
+    <!-- 프로그레스 바 -->
+    <div class="cl-progress">
+      <div class="prog-step active" id="ps0"></div>
+      <div class="prog-step" id="ps1"></div>
+      <div class="prog-step" id="ps2"></div>
+      <div class="prog-step" id="ps3"></div>
+      <div class="prog-step" id="ps4"></div>
+    </div>
+    <div class="prog-label">
+      <span id="pl0" class="cur">성별</span>
+      <span id="pl1">나이</span>
+      <span id="pl2">직업</span>
+      <span id="pl3">우선순위</span>
+      <span id="pl4">차종</span>
+    </div>
+
+    <div class="cl-body" id="chatBody"></div>
+    <div class="cl-input">
+      <input id="chatInput" type="text" placeholder="AI가 질문 중입니다..." disabled>
+      <button class="cl-send" id="sendBtn" disabled>➤</button>
+    </div>
+  </div>
+
+  <div class="cr">
+    <div class="cr-hdr">
+      <span class="cr-hdr-t">📋 견적 관심 차량</span>
+      <button class="cr-hdr-btn" onclick="resetCr()">초기화</button>
+    </div>
+    <div class="cr-list" id="crList">
+      <div class="cr-empty-wrap">
+        <div class="cr-empty-ico">🚗</div>
+        <div class="cr-empty-txt">AI 상담 후<br>관심 차량이 표시됩니다</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// CAR_IMGS is defined in common.js
+
+const ALL_CARS = [
+  {key:"g80",      brand:"GENESIS", name:"G80 3.5T AWD 스포츠",          spec:"3.5L T-GDI · 380마력",      price:"7,890만원~", tag:"국산",    tagC:"tag-k"},
+  {key:"bmw5",     brand:"BMW",     name:"5시리즈 530i xDrive M스포츠",   spec:"2.0L 터보 · 252마력",       price:"8,230만원~", tag:"수입",    tagC:"tag-i"},
+  {key:"k8",       brand:"KIA",     name:"K8 3.5 GDI 시그니처",           spec:"3.5L GDI · 300마력",        price:"4,256만원~", tag:"국산",    tagC:"tag-k"},
+  {key:"grandeur", brand:"HYUNDAI", name:"그랜저 캘리그래피 3.5 GDI",     spec:"3.5L GDI · 304마력",        price:"4,870만원~", tag:"국산",    tagC:"tag-k"},
+  {key:"sorento",  brand:"KIA",     name:"쏘렌토 하이브리드 시그니처",    spec:"1.6T HEV · 복합 16.0km/L", price:"3,896만원~", tag:"HEV",     tagC:"tag-h"},
+  {key:"tucson",   brand:"HYUNDAI", name:"투싼 하이브리드 인스퍼레이션",  spec:"1.6T HEV · 복합 15.6km/L", price:"2,990만원~", tag:"HEV",     tagC:"tag-h"},
+  {key:"nx350h",   brand:"LEXUS",   name:"NX 350h F SPORT",               spec:"2.5L HEV · 복합 14.6km/L", price:"6,560만원~", tag:"수입HEV", tagC:"tag-i"},
+  {key:"santafe",  brand:"HYUNDAI", name:"싼타페 하이브리드 캘리그래피",  spec:"1.6T HEV · 복합 14.2km/L", price:"3,690만원~", tag:"HEV",     tagC:"tag-h"},
+];
+
+/*
+  시나리오 이벤트 타입:
+  - agent  : 에이전트 말풍선 (타이핑 인디케이터 후 표시)
+  - user   : 사용자 말풍선 (즉시 표시)
+  - progress: 프로그레스 바 단계 업데이트 (index)
+  - summary: 수집 조건 요약 박스
+  - rec    : 추천 카드 렌더
+  delay    : 이전 이벤트 이후 대기 ms
+*/
+var SCENARIO = [
+  // ① 성별
+  {type:"agent",    delay:700,
+   text:"안녕하세요! 우리WON카 AI 추천 상담사입니다 😊\n몇 가지만 여쭤보고 딱 맞는 차를 찾아드릴게요.\n\n먼저, 성별이 어떻게 되시나요?"},
+
+  {type:"user",     delay:2000, text:"여성이에요"},
+  {type:"progress", delay:200,  index:1},
+
+  // ② 나이대
+  {type:"agent",    delay:900,
+   text:"네, 감사합니다! 😊\n연령대는 어떻게 되시나요?"},
+
+  {type:"user",     delay:1800, text:"20대 후반이에요"},
+  {type:"progress", delay:200,  index:2},
+
+  // ③ 직업군
+  {type:"agent",    delay:900,
+   text:"직업군도 여쭤봐도 될까요?\n예를 들어 직장인, 자영업자, 학생 등이요."},
+
+  {type:"user",     delay:2000, text:"마케팅 회사 다니고 있어요"},
+  {type:"progress", delay:200,  index:3},
+
+  // ④ 우선순위
+  {type:"agent",    delay:1000,
+   text:"차량 선택에서 가장 중요하게 생각하시는 게 뭔가요?\n연비, 주행성능, 편의성 중에서 꼽아주신다면요."},
+
+  {type:"user",     delay:2200, text:"연비요! 출퇴근 거리가 길어서 연비가 제일 중요해요"},
+  {type:"progress", delay:200,  index:4},
+
+  // ⑤ 차종
+  {type:"agent",    delay:900,
+   text:"마지막으로 세단과 SUV 중 어떤 스타일을 선호하세요?"},
+
+  {type:"user",     delay:1800, text:"SUV가 좋아요. 실용적으로 쓸 수 있을 것 같아서요."},
+  {type:"progress", delay:200,  index:5},
+
+  // 분석 중
+  {type:"agent",    delay:800,
+   text:"감사합니다! 입력해주신 조건을 분석하고 있습니다 🔍"},
+
+  // 조건 요약
+  {type:"summary",  delay:1200,
+   items:[
+     {ico:"👩", label:"성별", val:"여성"},
+     {ico:"🎂", label:"나이", val:"20대 후반"},
+     {ico:"💼", label:"직업", val:"직장인 (마케팅)"},
+     {ico:"🌿", label:"우선순위", val:"연비"},
+     {ico:"🚙", label:"선호 차종", val:"SUV"},
+   ]},
+
+  // 추천
+  {type:"agent",    delay:1000,
+   text:"분석 완료! 고객님 조건에 딱 맞는\n연비 특화 하이브리드 SUV를 추천해드립니다 🎯"},
+
+  {type:"rec",      delay:700,
+   cars:["sorento","tucson","nx350h","santafe"]},
+];
+
+var chatOpened = false;
+
+function openChat() {
+  if (!document.getElementById("chatPanel").classList.contains("open")) {
+    document.getElementById("chatPanel").classList.add("open");
+    document.getElementById("backdrop").classList.add("on");
+  }
+  if (!chatOpened) {
+    chatOpened = true;
+    playScenario();
+  }
+}
+function closeChat() {
+  document.getElementById("chatPanel").classList.remove("open");
+  document.getElementById("backdrop").classList.remove("on");
+}
+
+function playScenario() {
+  var t = 0;
+  for (var i = 0; i < SCENARIO.length; i++) {
+    var step = SCENARIO[i];
+    t += step.delay;
+
+    (function(s, fireAt) {
+      setTimeout(function() { playStep(s); }, fireAt);
+    })(step, t);
+
+    // agent 타입은 타이핑 애니메이션 시간만큼 t를 추가해서
+    // 다음 이벤트가 반드시 메시지 출력 이후에 시작되게 함
+    if (step.type === "agent") {
+      t += 500 + step.text.length * 20;
+    }
+    // summary도 마찬가지로 렌더 시간 확보
+    if (step.type === "summary") {
+      t += 400;
+    }
+  }
+}
+
+function playStep(step) {
+  if (step.type === "agent") {
+    var tid = showTyping();
+    var dur = 500 + step.text.length * 20;
+    (function(id, txt) {
+      setTimeout(function() { removeTyping(id); appendAgent(txt); }, dur);
+    })(tid, step.text);
+
+  } else if (step.type === "user") {
+    appendUser(step.text);
+
+  } else if (step.type === "progress") {
+    updateProgress(step.index);
+
+  } else if (step.type === "summary") {
+    var rows = step.items.map(function(it) {
+      return '<div class="cond-row"><span class="cond-ico">' + it.ico + '</span>' +
+             '<span style="color:#6b7280;font-size:11px;">' + it.label + '</span>' +
+             '<span style="margin-left:auto;font-weight:700;color:#1a1a2e;font-size:11px;">' + it.val + '</span></div>';
+    }).join("");
+    appendAgentHTML(
+      '<div class="cond-summary">' +
+      '<div class="cs-title">📋 수집된 고객 조건</div>' +
+      rows +
+      '</div>'
+    );
+
+  } else if (step.type === "rec") {
+    showRec(step.cars);
+  }
+}
+
+function updateProgress(idx) {
+  // 완료된 단계 색칠
+  for (var i = 0; i < 5; i++) {
+    var ps = document.getElementById("ps" + i);
+    var pl = document.getElementById("pl" + i);
+    if (i < idx) {
+      ps.className = "prog-step done";
+      pl.className = "";
+    } else if (i === idx && idx < 5) {
+      ps.className = "prog-step active";
+      pl.className = "cur";
+    } else {
+      ps.className = "prog-step";
+      pl.className = "";
+    }
+  }
+}
+
+var typCount = 0;
+function showTyping() {
+  var id = "typ" + (++typCount);
+  document.getElementById("chatBody").insertAdjacentHTML("beforeend",
+    '<div class="typing-row msg-anim" id="' + id + '">' +
+    '<div class="m-av av-bot">🤖</div>' +
+    '<div class="typing-bub"><span></span><span></span><span></span></div>' +
+    '</div>');
+  scroll(); return id;
+}
+function removeTyping(id) { var el = document.getElementById(id); if (el) el.remove(); }
+
+function appendAgent(text) {
+  document.getElementById("chatBody").insertAdjacentHTML("beforeend",
+    '<div class="msg msg-anim">' +
+    '<div class="m-av av-bot">🤖</div>' +
+    '<div class="msg-r">' +
+    '<div class="bubble b-bot">' + text.replace(/\n/g, "<br>") + "</div>" +
+    '<div class="m-time">' + now() + "</div>" +
+    "</div></div>");
+  scroll();
+}
+
+function appendAgentHTML(html) {
+  document.getElementById("chatBody").insertAdjacentHTML("beforeend",
+    '<div class="msg msg-anim">' +
+    '<div class="m-av av-bot">🤖</div>' +
+    '<div class="msg-r" style="max-width:88%">' +
+    '<div class="bubble b-bot" style="padding:12px 14px;">' + html + "</div>" +
+    '<div class="m-time">' + now() + "</div>" +
+    "</div></div>");
+  scroll();
+}
+
+function appendUser(text) {
+  document.getElementById("chatBody").insertAdjacentHTML("beforeend",
+    '<div class="msg msg-user msg-anim">' +
+    '<div class="m-av av-usr">👤</div>' +
+    '<div class="msg-r">' +
+    '<div class="bubble b-usr">' + text + "</div>" +
+    '<div class="m-time">' + now() + "</div>" +
+    "</div></div>");
+  scroll();
+}
+
+function showRec(keys) {
+  var cars = keys.map(function(k) {
+    return ALL_CARS.find(function(c) { return c.key === k; });
+  }).filter(Boolean);
+
+  var cards = cars.map(function(c) {
+    return '<div class="rc" onclick="addCr(\'' + c.key + '\',\'' + c.brand + '\',\'' + c.name + '\',\'' + c.spec + '\',\'' + c.price + '\')">' +
+      '<div class="rc-img"><img src="' + CAR_IMGS[c.key] + '" alt="' + c.brand + '"></div>' +
+      '<div class="rc-info">' +
+      '<div class="rc-brand">' + c.brand + "</div>" +
+      '<div class="rc-name">' + c.name + "</div>" +
+      '<div class="rc-spec">' + c.spec + "</div>" +
+      '<div class="rc-price">' + c.price + "</div>" +
+      '<button class="rc-btn" onclick="event.stopPropagation();addCr(\'' + c.key + '\',\'' + c.brand + '\',\'' + c.name + '\',\'' + c.spec + '\',\'' + c.price + '\')">견적 담기</button>' +
+      "</div></div>";
+  }).join("");
+
+  appendAgentHTML(
+    '<div style="font-size:12px;color:#555;margin-bottom:8px;">🎯 고객님 맞춤 추천 차량 · 연비 특화 하이브리드 SUV</div>' +
+    '<div class="rec-wrap">' + cards + "</div>" +
+    '<div style="font-size:11px;color:#94a3b8;margin-top:10px;">원하시는 차량을 선택하면 견적을 담아드려요!</div>'
+  );
+  cars.forEach(function(c) { addCr(c.key, c.brand, c.name, c.spec, c.price); });
+
+  // 프로그레스 완료
+  updateProgress(5);
+}
+
+function addCr(key, brand, name, spec, price) {
+  var list = document.getElementById("crList");
+  if (list.querySelector('[data-key="' + key + '"]')) return;
+  var empty = list.querySelector(".cr-empty-wrap");
+  if (empty) empty.remove();
+  list.insertAdjacentHTML("beforeend",
+    '<div class="cr-item" data-key="' + key + '">' +
+    '<div class="cr-item-img"><img src="' + CAR_IMGS[key] + '" alt="' + brand + '"></div>' +
+    '<div class="cr-item-info">' +
+    '<div class="cr-item-brand">' + brand + "</div>" +
+    '<div class="cr-item-name">' + name + "</div>" +
+    '<div class="cr-item-price">' + price + "</div>" +
+    "</div></div>");
+}
+function resetCr() {
+  document.getElementById("crList").innerHTML =
+    '<div class="cr-empty-wrap"><div class="cr-empty-ico">🚗</div><div class="cr-empty-txt">AI 상담 후<br>관심 차량이 표시됩니다</div></div>';
+}
+
+function scroll() { var b = document.getElementById("chatBody"); b.scrollTop = b.scrollHeight; }
+function now() { return new Date().toLocaleTimeString("ko-KR", {hour:"2-digit", minute:"2-digit"}); }
+function wishBtn(btn) { var on = btn.textContent.indexOf("♥") !== -1; btn.textContent = on ? "♡ 찜하기" : "♥ 찜됨"; btn.style.color = on ? "" : "#e53e3e"; }
+
+document.getElementById("popularGrid").innerHTML = ALL_CARS.map(function(c) {
+  return '<div class="prod-card">' +
+    '<div class="pc-img"><img src="' + CAR_IMGS[c.key] + '" alt="' + c.brand + '">' +
+    '<span class="pc-tag ' + c.tagC + '">' + c.tag + "</span>" +
+    '<div class="pc-btns">' +
+    '<button class="pc-btn" onclick="event.stopPropagation();wishBtn(this)">♡ 찜하기</button>' +
+    '<button class="pc-btn">🛒 담기</button>' +
+    "</div></div>" +
+    '<div class="pc-info"><div class="pc-brand">' + c.brand + "</div>" +
+    '<div class="pc-name">' + c.name + "</div>" +
+    '<div class="pc-spec">' + c.spec + "</div>" +
+    '<div class="pc-price">' + c.price + "</div></div></div>";
+}).join("");
+</script>
+
+<script src="search_data.js"></script>
+<script src="common.js"></script>
+<script src="non_member.js"></script>
+
+</body>
+</html>

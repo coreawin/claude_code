@@ -1,0 +1,78 @@
+[
+  {
+    "id": "cust_001",
+    "name": "김준호",
+    "gender": "남",
+    "age": "30대",
+    "creditScore": 930,
+    "currentCar": "더뉴스포티지(NQ5)",
+    "expectedFeature": "주행성능",
+    "preferredCarType": "세단",
+    "preferences": {
+      "performance": 9,
+      "efficiency": 6,
+      "design": 7,
+      "safety": 8,
+      "comfort": 7
+    },
+    "isGuest": false,
+    "avatar": "👨"
+  },
+  {
+    "id": "cust_002",
+    "name": "이수진",
+    "gender": "여",
+    "age": "20대",
+    "creditScore": 950,
+    "currentCar": "C-CLASS(W206)",
+    "expectedFeature": "연비",
+    "preferredCarType": "SUV",
+    "preferences": {
+      "performance": 6,
+      "efficiency": 10,
+      "design": 8,
+      "safety": 9,
+      "comfort": 8
+    },
+    "isGuest": false,
+    "avatar": "👩"
+  },
+  {
+    "id": "cust_003,
+    "name": "박성진",
+    "gender": "남,
+    "age": "50",
+    "creditScore": 890,
+    "currentCar": "올 뉴 카니발(YP)",
+    "expectedFeature": "공간",
+    "preferredCarType": "SUV",
+    "preferences": {
+      "performance": 8,
+      "efficiency": 7,
+      "design": 8,
+      "safety": 10,
+      "comfort": 8
+    },
+    "isGuest": false,
+    "avatar": "👩"
+  },
+  {
+    "id": "cust_guest",
+    "name": "최승훈",
+    "gender": "남",
+    "age": "미정",
+    "creditScore": 0,
+    "currentCar": "없음",
+    "expectedFeature": "인기차종",
+    "preferredCarType": "전체",
+    "preferences": {
+      "performance": 5,
+      "efficiency": 5,
+      "design": 5,
+      "safety": 5,
+      "comfort": 5
+    },
+    "isGuest": true,
+    "avatar": "👤"
+  }
+]

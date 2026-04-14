@@ -1,0 +1,40 @@
+{
+  "queryId": "result_03",
+  "title": "패밀리카 대형 SUV",
+  "description": "가족 모두가 편하게 탈 수 있는 넓은 공간의 SUV",
+  "cars": [
+    {
+      "img": "sorento",
+      "brand": "KIA",
+      "name": "쏘렌토 하이브리드<br>시그니처",
+      "spec": "1.6T HEV · 7인승 · 복합 16.0km/L",
+      "price": "3,896만",
+      "sub": "월 할부 약 75만원 (60개월)",
+      "tag": "HEV",
+      "tagC": "tag-h",
+      "highlight": "7인승 + 연비"
+    },
+    {
+      "img": "santafe",
+      "brand": "HYUNDAI",
+      "name": "싼타페 하이브리드<br>캘리그래피",
+      "spec": "1.6T HEV · 7인승 · 복합 14.2km/L",
+      "price": "3,690만",
+      "sub": "월 할부 약 71만원 (60개월)",
+      "tag": "HEV",
+      "tagC": "tag-h",
+      "highlight": "패밀리 특화"
+    },
+    {
+      "img": "tucson",
+      "brand": "HYUNDAI",
+      "name": "투싼 하이브리드<br>인스퍼레이션",
+      "spec": "1.6T HEV · 5인승 · 복합 15.6km/L",
+      "price": "2,990만",
+      "sub": "월 할부 약 58만원 (60개월)",
+      "tag": "HEV",
+      "tagC": "tag-h",
+      "highlight": "경제적 선택"
+    }
+  ]
+}

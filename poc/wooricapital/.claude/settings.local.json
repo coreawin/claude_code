@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3)",
+      "Bash(python3 -c ':*)",
+      "Bash(node -c common.js)",
+      "Bash(node -c member.js)",
+      "Bash(wc -c /c/Users/corea/.claude/skills/**/SKILL.md)",
+      "Read(//d/Claude Code/poc/wooricapital/src/**)",
+      "Read(//d/Claude Code/poc/wooricapital/assets/images/**)",
+      "Read(//d/Claude Code/poc/wooricapital/assets/icons/**)"
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": false
+  }
+}

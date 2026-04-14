@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>검색 기능 테스트</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .search-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .search-wrap {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #ddd;
+      border-radius: 24px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    #search-input:focus {
+      outline: none;
+      border-color: #1a56db;
+    }
+
+    .clear-btn {
+      padding: 8px 16px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .clear-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .search-tips {
+      background: #f0f4ff;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    .search-tips strong {
+      color: #1a56db;
+    }
+
+    /* 기본 추천 섹션 */
+    #recommended-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #recommended-section h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    /* 검색 결과 컨테이너 */
+    #search-results-container {
+      display: none;
+    }
+
+    .search-result-section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .search-result-header {
+      margin-bottom: 15px;
+      border-bottom: 2px solid #1a56db;
+      padding-bottom: 10px;
+    }
+
+    .search-result-header h3 {
+      font-size: 18px;
+      color: #1a56db;
+      margin-bottom: 5px;
+    }
+
+    .search-result-desc {
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* 검색 결과 없음 */
+    .search-no-result {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .no-result-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .no-result-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .no-result-subtitle {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 20px;
+    }
+
+    .search-suggestions {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+
+    .suggestion-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .suggestion-chips {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+    }
+
+    .suggestion-chip {
+      background: #f0f4ff;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .suggestion-chip:hover {
+      background: #1a56db;
+      color: white;
+      border-color: #1a56db;
+    }
+
+    /* 상품 그리드 */
+    .prod-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .prod-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow .2s, transform .15s;
+    }
+
+    .prod-card:hover {
+      box-shadow: 0 6px 20px rgba(26,86,219,.1);
+      transform: translateY(-2px);
+    }
+
+    .pc-img {
+      position: relative;
+      height: 160px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .pc-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+    }
+
+    .pc-tag {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 9px;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+
+    .tag-k {
+      background: rgba(26,86,219,.25);
+      color: #60a5fa;
+      border: 1px solid rgba(96,165,250,.4);
+    }
+
+    .tag-i {
+      background: rgba(255,152,0,.2);
+      color: #fbbf24;
+      border: 1px solid rgba(251,191,36,.4);
+    }
+
+    .tag-h {
+      background: rgba(40,199,111,.2);
+      color: #34d399;
+      border: 1px solid rgba(52,211,153,.4);
+    }
+
+    .pc-btns {
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      right: 0;
+      display: flex;
+      gap: 5px;
+      padding: 0 8px;
+    }
+
+    .pc-btn {
+      flex: 1;
+      background: rgba(255,255,255,.9);
+      border: none;
+      border-radius: 5px;
+      padding: 5px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .pc-btn:hover {
+      background: #fff;
+    }
+
+    .pc-info {
+      padding: 9px 11px 11px;
+    }
+
+    .pc-brand {
+      font-size: 10px;
+      color: #aaa;
+      margin-bottom: 1px;
+    }
+
+    .pc-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0a1628;
+      margin-bottom: 3px;
+      line-height: 1.35;
+    }
+
+    .pc-spec {
+      font-size: 10px;
+      color: #999;
+      margin-bottom: 5px;
+    }
+
+    .pc-price {
+      font-size: 15px;
+      font-weight: 900;
+      color: #0a1628;
+    }
+
+    .test-info {
+      background: #fffbea;
+      border: 1px solid #ffd700;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #665d1f;
+    }
+
+    .test-info strong {
+      color: #cc9900;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1 style="margin-bottom: 20px;">🔍 검색 기능 테스트</h1>
+
+  <div class="test-info">
+    <strong>테스트 방법:</strong> 아래 검색창에 자연어를 입력하면 미리 정의된 5개 질의와 매칭되어 결과가 표시됩니다.
+    <br><strong>추천 검색어:</strong> "연비 SUV", "고성능 세단", "가족 7인", "수입차", "3천만원"
+  </div>
+
+  <div class="search-section">
+    <div class="search-wrap">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="검색어를 입력하세요 (예: 연비 좋은 SUV, 고성능 세단 등)"
+      >
+      <button class="clear-btn" onclick="clearSearch()">검색 초기화</button>
+    </div>
+
+    <div class="search-tips">
+      💡 <strong>자연어 검색:</strong> 여러 단어를 조합하여 입력하면 해당하는 추천 질의들이 모두 표시됩니다.
+    </div>
+  </div>
+
+  <!-- 기본 추천 상태 -->
+  <div id="recommended-section">
+    <h2>기본 추천 (검색창이 비었을 때)</h2>
+    <p style="color: #666; font-size: 13px;">검색창에 키워드를 입력하면 아래에 검색 결과가 표시됩니다.</p>
+  </div>
+
+  <!-- 검색 결과 컨테이너 -->
+  <div id="search-results-container"></div>
+</div>
+
+<script src="search_data.js"></script>
+<script src="common.js"></script>
+<script>
+  // 초기화
+  window.addEventListener('DOMContentLoaded', function() {
+    const initResult = initSearch();
+    if (initResult) {
+      console.log('✅ 검색 시스템 초기화 완료');
+      console.log('로드된 질의:', searchQueries);
+    } else {
+      console.error('❌ 검색 시스템 초기화 실패');
+    }
+  });
+
+  // 검색 입력 핸들러
+  document.getElementById('search-input').addEventListener('input', function(e) {
+    handleSearchInput(e.target.value);
+  });
+
+  // 검색 초기화
+  function clearSearch() {
+    document.getElementById('search-input').value = '';
+    showDefaultResults();
+    console.log('검색 초기화됨');
+  }
+
+  // 상품 선택/상세보기 핸들러 (common.js의 함수 사용)
+</script>
+
+</body>
+</html>

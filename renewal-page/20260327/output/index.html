@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QA 결과 조회</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 좌측 패널: 콜 상담 정보 -->
+    <div class="panel left-panel">
+      <div class="panel-header">
+        <h2>콜 상담 정보</h2>
+      </div>
+
+      <!-- 상담 정보 테이블 -->
+      <div class="info-table">
+        <div class="table-header">
+          <div class="table-cell">구분</div>
+          <div class="table-cell">평가(명세서)</div>
+          <div class="table-cell">4차 검수(한국)</div>
+          <div class="table-cell">점검자</div>
+        </div>
+        <div class="table-row">
+          <div class="table-cell">2*5xxx0822</div>
+          <div class="table-cell">1172536</div>
+          <div class="table-cell">문서평가 > 1/2차<br>1/2차 Evaluators...</div>
+          <div class="table-cell">사용료 씨5사 1,111</div>
+        </div>
+      </div>
+
+      <!-- 대화 상세 -->
+      <div class="chat-section">
+        <div class="chat-header">
+          <h3>대화 상세</h3>
+          <button class="view-original-btn">대화 원문 보기</button>
+        </div>
+        <div class="chat-datetime">2024.01.02 09:34:03 ~ 09:40:41</div>
+
+        <div class="chat-messages">
+          <!-- 사용자 메시지 1 -->
+          <div class="message user-message">
+            <div class="message-avatar">👤</div>
+            <div class="message-content">
+              <div class="message-text">안녕하세요. 제가 도와드릴 사항이 무엇인가요?</div>
+              <div class="message-time">09:34</div>
+            </div>
+          </div>
+
+          <!-- 상담원 메시지 1 -->
+          <div class="message agent-message">
+            <div class="message-content">
+              <div class="message-text">네, 안녕하세요! 상품 교환 문의 드리고 싶습니다.</div>
+              <div class="message-time">09:35</div>
+            </div>
+            <div class="message-avatar">👨‍💼</div>
+          </div>
+
+          <!-- 사용자 메시지 2 -->
+          <div class="message user-message">
+            <div class="message-avatar">👤</div>
+            <div class="message-content">
+              <div class="message-text">물론이죠. 어떤 상품 교환을 원하시나요?</div>
+              <div class="message-time">09:36</div>
+            </div>
+          </div>
+
+          <!-- 상담원 메시지 2 -->
+          <div class="message agent-message">
+            <div class="message-content">
+              <div class="message-text">지난주에 구입한 제품이 불량이라서 교환을 요청드립니다. 주문번호는 12345678입니다.</div>
+              <div class="message-time">09:37</div>
+            </div>
+            <div class="message-avatar">👨‍💼</div>
+          </div>
+
+          <!-- 사용자 메시지 3 -->
+          <div class="message user-message">
+            <div class="message-avatar">👤</div>
+            <div class="message-content">
+              <div class="message-text">주문번호 확인하겠습니다. 잠깐만요.</div>
+              <div class="message-time">09:38</div>
+            </div>
+          </div>
+
+          <!-- 상담원 메시지 3 -->
+          <div class="message agent-message">
+            <div class="message-content">
+              <div class="message-text">네, 기다리겠습니다.</div>
+              <div class="message-time">09:39</div>
+            </div>
+            <div class="message-avatar">👨‍💼</div>
+          </div>
+
+          <!-- 사용자 메시지 4 -->
+          <div class="message user-message">
+            <div class="message-avatar">👤</div>
+            <div class="message-content">
+              <div class="message-text">확인되었습니다. 교환처리를 진행하겠습니다.</div>
+              <div class="message-time">09:40</div>
+            </div>
+          </div>
+
+          <!-- 상담원 메시지 4 -->
+          <div class="message agent-message">
+            <div class="message-content">
+              <div class="message-text">감사합니다! 빠른 대응 감사드립니다.</div>
+              <div class="message-time">09:40</div>
+            </div>
+            <div class="message-avatar">👨‍💼</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 우측 패널: 체크리스트 -->
+    <div class="panel right-panel">
+      <div class="panel-header">
+        <h2>체크리스트</h2>
+      </div>
+
+      <div class="checklist">
+        <!-- 카테고리 1: 기본 준수사항 (보라색) -->
+        <div class="checklist-category">
+          <div class="category-header purple">기본 준수사항</div>
+          <div class="category-items">
+            <div class="checklist-item">
+              <input type="checkbox" id="item1" class="checklist-input" data-points="1">
+              <label for="item1">인사말 사용 여부</label>
+              <span class="item-points">1</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="item2" class="checklist-input" data-points="1">
+              <label for="item2">고객명 사용 여부</label>
+              <span class="item-points">1</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="item3" class="checklist-input" data-points="1">
+              <label for="item3">감사 인사말 사용</label>
+              <span class="item-points">1</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="item4" class="checklist-input" data-points="1">
+              <label for="item4">친절한 톤앤매너</label>
+              <span class="item-points">1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 카테고리 2: 전문성 (파란색) -->
+        <div class="checklist-category">
+          <div class="category-header blue">전문성</div>
+          <div class="category-items">
+            <div class="checklist-item">
+              <input type="checkbox" id="item5" class="checklist-input" data-points="2">
+              <label for="item5">상품 정보 정확성</label>
+              <span class="item-points">2</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="item6" class="checklist-input" data-points="2">
+              <label for="item6">신속한 문제 해결</label>
+              <span class="item-points">2</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="item7" class="checklist-input" data-points="2">
+              <label for="item7">명확한 설명</label>
+              <span class="item-points">2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 카테고리 3: 고객만족 (주황색) -->
+        <div class="checklist-category">
+          <div class="category-header orange">고객만족</div>
+          <div class="category-items">
+            <div class="checklist-item">
+              <input type="checkbox" id="item8" class="checklist-input" data-points="2">
+              <label for="item8">적절한 솔루션 제시</label>
+              <span class="item-points">2</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="item9" class="checklist-input" data-points="2">
+              <label for="item9">적극적인 태도</label>
+              <span class="item-points">2</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="item10" class="checklist-input" data-points="2">
+              <label for="item10">고객 피드백 반영</label>
+              <span class="item-points">2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 총점 표시 -->
+      <div class="total-score">
+        <div class="score-text">
+          <span id="currentScore">0</span>점 / <span id="totalScore">27</span>
+        </div>
+        <div class="page-info">27 / 11</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

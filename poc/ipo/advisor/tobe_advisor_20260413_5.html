@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상담 이력 상세</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;
+    font-size: 13px;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  /* ── 팝업 ── */
+  .popup {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    width: 980px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── 헤더 ── */
+  .popup-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: #2c4a7c; color: #fff;
+    border-radius: 6px 6px 0 0;
+    font-size: 14px; font-weight: bold;
+    flex-shrink: 0;
+  }
+  .popup-header .close-btn {
+    cursor: pointer; font-size: 20px; line-height: 1;
+    color: #fff; background: none; border: none; padding: 0 4px;
+  }
+
+  /* ── 본문 2컬럼 ── */
+  .popup-body {
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex: 1;
+    overflow: hidden;
+  }
+  .col-left,
+  .col-right {
+    display: flex; flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    padding-right: 2px;
+  }
+
+  /* ── 섹션 공통 ── */
+  .section {
+    border: 1px solid #d0d5de;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .col-left  .section:last-child,
+  .col-right .section:last-child {
+    flex: 1; display: flex; flex-direction: column; min-height: 0;
+  }
+  .col-left  .section:last-child .section-inner,
+  .col-right .section:last-child .section-inner {
+    flex: 1; overflow: hidden; min-height: 0;
+  }
+  .col-right .section:nth-child(2) {
+    display: flex; flex-direction: column;
+    max-height: 240px;
+    overflow: hidden;
+  }
+  .section-title {
+    background: #f0f3f8;
+    border-bottom: 1px solid #d0d5de;
+    padding: 5px 10px;
+    font-weight: bold; font-size: 12px; color: #333;
+    flex-shrink: 0;
+  }
+  .section-inner { display: flex; flex-direction: column; }
+
+  /* ── 고객 기본정보 ── */
+  .customer-inline {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap; padding: 6px 10px;
+  }
+  .customer-inline .name { font-weight: bold; font-size: 14px; color: #2c4a7c; }
+  .customer-inline .divider { color: #bbb; }
+  .customer-inline .info-chip {
+    background: #f0f3f8; border: 1px solid #d0d5de;
+    border-radius: 3px; padding: 2px 7px; font-size: 12px; color: #444;
+  }
+  .customer-inline .info-label { font-size: 11px; color: #888; margin-right: 3px; }
+
+  /* ── 공통 테이블 ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .data-table thead th {
+    background: #f5f7fb; color: #666; font-weight: bold;
+    font-size: 10.5px;
+    text-align: center; padding: 3px 4px;
+    border-bottom: 1px solid #e0e3eb; white-space: nowrap;
+  }
+  .data-table thead th.col-rank { width: 1%; min-width: 26px; }
+  .data-table tbody td { padding: 5px 8px; border-bottom: 1px solid #eef0f5; color: #333; }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody td.rank {
+    text-align: center; color: #e05a2b; font-weight: bold;
+    padding: 5px 4px; white-space: nowrap;
+  }
+
+  /* ── 인라인 편집 ── */
+  .action-cell { text-align: center; white-space: nowrap; padding: 3px 4px; }
+  .icon-btn { background: none; border: none; cursor: pointer; font-size: 13px; padding: 2px 3px; border-radius: 2px; }
+  .edit-btn { color: #2c4a7c; }
+  .edit-btn:hover { background: #e8f0fe; }
+  .del-row-btn { color: #c0392b; }
+  .del-row-btn:hover { background: #ffe5e3; }
+  .row-edit-input {
+    width: 100%; padding: 2px 6px;
+    border: 1px solid #2c4a7c; border-radius: 3px;
+    font-size: 12.5px; outline: none;
+  }
+
+  /* ── 이슈 태그 ── */
+  .issue-tag-area {
+    padding: 8px 10px; min-height: 40px;
+    display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+  }
+  .issue-legend { width: 100%; display: flex; gap: 12px; padding: 4px 10px 0; font-size: 11px; color: #888; }
+  .issue-legend span { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .legend-dot.sys  { background: #5b8def; }
+  .legend-dot.user { background: #27ae60; }
+  .issue-tag {
+    border-radius: 12px; padding: 3px 8px 3px 10px;
+    font-size: 12px; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;
+  }
+  .issue-tag.sys  { background: #e8f0fe; border: 1px solid #aac4f5; color: #1a55c4; }
+  .issue-tag.user { background: #e6f7ee; border: 1px solid #82d4a0; color: #1a7a3a; }
+  .issue-tag .del-btn { cursor: pointer; font-size: 14px; line-height: 1; background: none; border: none; padding: 0 1px; }
+  .issue-tag.sys  .del-btn { color: #7ba7e8; }
+  .issue-tag.user .del-btn { color: #6ec48b; }
+  .issue-tag.sys  .del-btn:hover { color: #c0392b; }
+  .issue-tag.user .del-btn:hover { color: #c0392b; }
+  .issue-input-row {
+    display: flex; gap: 5px; padding: 5px 10px 7px;
+    border-top: 1px solid #eef0f5;
+  }
+  .issue-input-row input {
+    flex: 1; padding: 3px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; outline: none;
+  }
+  .issue-input-row input:focus { border-color: #2c4a7c; }
+  .issue-input-row button {
+    padding: 3px 10px; background: #2c4a7c; color: #fff; border: none; border-radius: 3px; font-size: 12px; cursor: pointer;
+  }
+  .issue-input-row button:hover { background: #1e3460; }
+
+  /* ── 상담요약 ── */
+  .summary-plain-item { padding: 7px 10px; border-bottom: 1px solid #eef0f5; }
+  .summary-plain-item:last-child { border-bottom: none; }
+  .summary-plain-label { font-size: 11px; font-weight: bold; color: #888; margin-bottom: 3px; }
+  .summary-plain-text {
+    font-size: 12.5px; color: #333; line-height: 1.6;
+    cursor: text; padding: 3px 4px; border-radius: 3px; transition: background 0.15s;
+  }
+  .summary-plain-text:hover { background: #f5f7fb; }
+  .summary-editor {
+    display: block; width: 100%; padding: 6px 12px;
+    font-size: 12px; line-height: 1.6;
+    font-family: '맑은 고딕', 'Malgun Gothic', monospace;
+    background: #fffdf0; border: 2px solid #f0c040; border-left: none; border-right: none;
+    outline: none; resize: none; overflow: hidden; color: #333; box-sizing: border-box;
+  }
+  .summary-plain-text p { margin: 0 0 4px; }
+  .summary-plain-text p:last-child { margin-bottom: 0; }
+  .summary-plain-text ul, .summary-plain-text ol { padding-left: 16px; margin: 3px 0; }
+  .summary-plain-text li { margin-bottom: 2px; }
+  .summary-plain-text strong { color: #2c4a7c; font-weight: bold; }
+
+  /* ── 긍부정 분석 ── */
+  /* 종합 점수 게이지 */
+  .sent-score-wrap {
+    padding: 10px 14px 6px;
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .sent-score-badge {
+    flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center;
+    background: #eaf4ee; border: 1px solid #82d4a0; border-radius: 6px;
+    padding: 6px 12px; min-width: 64px;
+  }
+  .sent-score-badge .badge-num {
+    font-size: 22px; font-weight: bold; color: #1a7a3a; line-height: 1.1;
+  }
+  .sent-score-badge .badge-label {
+    font-size: 10px; color: #555; margin-top: 2px;
+  }
+  .sent-gauge-box { flex: 1; }
+  .sent-gauge-label {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: #888; margin-bottom: 3px;
+  }
+  .sent-gauge-track {
+    height: 12px; background: #e8edf5; border-radius: 6px;
+    overflow: hidden; position: relative;
+  }
+  /* 중간점(0) 기준선 */
+  .sent-gauge-track::after {
+    content: ''; position: absolute;
+    left: 50%; top: 0; height: 100%; width: 2px;
+    background: #ccc;
+  }
+  .sent-gauge-fill {
+    height: 100%;
+    background: linear-gradient(to right, #27ae60, #52c97a);
+    transition: width 0.6s ease;
+    position: relative;
+  }
+  .sent-gauge-fill.negative {
+    background: #c0392b;
+    border-radius: 6px 0 0 6px;
+  }
+  .sent-gauge-fill.positive {
+    background: linear-gradient(to right, #27ae60, #52c97a);
+    border-radius: 0 6px 6px 0;
+  }
+  /* 긍부정 현황 - 좌우 배치 (가로 막대 형식) */
+  .sent-items-container {
+    padding: 12px 14px 10px;
+    display: flex; flex-direction: column; gap: 10px;
+    flex: 1; min-height: 0;
+  }
+  .sent-bar-row {
+    display: flex; align-items: stretch; gap: 0; flex: 1; min-height: 0;
+  }
+  .sent-items-left {
+    flex: 1; display: flex; flex-direction: column; gap: 0;
+    background: #fef8f8;
+  }
+  .sent-items-right {
+    flex: 1; display: flex; flex-direction: column; gap: 0;
+    background: #f8fef8;
+  }
+  .sent-item {
+    flex: 1; display: flex; align-items: center;
+    font-size: 12px; padding: 6px 8px; border-bottom: 1px solid #eef0f5;
+    color: #333;
+  }
+  .sent-item:last-child {
+    border-bottom: none;
+  }
+  .sent-item-label {
+    color: #333; line-height: 1.4;
+  }
+  .sent-items-left .sent-item {
+    text-align: right; justify-content: flex-end;
+  }
+  .sent-items-right .sent-item {
+    text-align: left; justify-content: flex-start;
+  }
+
+  /* ── 상담 평가 ── */
+  .eval-body {
+    flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; padding: 8px 10px;
+  }
+  /* 레이더 + 항목 레이아웃 */
+  .radar-layout {
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .radar-canvas-box { flex-shrink: 0; width: 185px; height: 185px; }
+  .radar-legend-box { flex: 1; display: flex; flex-direction: column; gap: 0; }
+  /* 지표 카드 */
+  .radar-item {
+    padding: 5px 6px;
+    border-bottom: 1px solid #f0f2f8;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .radar-item:last-child { border-bottom: none; }
+  .radar-item-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .r-label { font-size: 11.5px; font-weight: bold; color: #2c4a7c; }
+  .r-score-badge {
+    font-size: 10px; font-weight: bold;
+    padding: 1px 6px; border-radius: 8px;
+    background: #edf2fb; color: #2c4a7c; border: 1px solid #c0cfec;
+  }
+  .r-score-bar {
+    height: 4px; background: #e8edf5; border-radius: 2px; overflow: hidden; margin: 2px 0;
+  }
+  .r-score-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(to right, #2c4a7c, #5b8def);
+    transition: width 0.5s ease;
+  }
+  .r-desc { font-size: 10.5px; color: #666; line-height: 1.45; }
+
+  /* 총점 요약 */
+  .eval-total-row {
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+    padding: 6px 0 2px;
+    border-top: 1px solid #e0e3eb;
+    margin-top: 6px;
+  }
+  .eval-total-label { font-size: 11px; color: #666; }
+  .eval-total-score { font-size: 16px; font-weight: bold; color: #2c4a7c; }
+  .eval-total-max { font-size: 11px; color: #aaa; }
+  .eval-grade {
+    font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 10px;
+    background: #eaf4ee; color: #1a7a3a; border: 1px solid #82d4a0;
+  }
+
+  /* ── 푸터 ── */
+  .popup-footer {
+    display: flex; justify-content: center; gap: 8px;
+    padding: 8px 14px 12px; flex-shrink: 0;
+    border-top: 1px solid #e8eaf0;
+  }
+  .btn-confirm {
+    padding: 6px 36px; background: #6b7280; color: #fff;
+    border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer;
+  }
+  .btn-confirm:hover { background: #4b5563; }
+  .btn-send {
+    padding: 6px 36px; background: #2c4a7c; color: #fff;
+    border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer;
+  }
+  .btn-send:hover { background: #1e3460; }
+</style>
+</head>
+<body>
+
+<div class="popup">
+
+  <!-- 헤더 -->
+  <div class="popup-header">
+    상담 이력 상세
+    <button class="close-btn" onclick="window.close()">×</button>
+  </div>
+
+  <!-- 본문 -->
+  <div class="popup-body">
+
+    <!-- ======= 좌측 컬럼 ======= -->
+    <div class="col-left">
+
+      <!-- 이슈어 -->
+      <div class="section">
+        <div class="section-title">이슈어</div>
+        <div class="issue-legend">
+          <span><i class="legend-dot sys"></i>자동 추출</span>
+          <span><i class="legend-dot user"></i>직접 추가</span>
+        </div>
+        <div class="issue-tag-area" id="issueTagArea">
+          <span class="issue-tag sys">전세사기 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+          <span class="issue-tag sys">금리인상 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+          <span class="issue-tag sys">대환대출 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+          <span class="issue-tag sys">부동산규제 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+          <span class="issue-tag sys">전세보증보험 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+        </div>
+        <div class="issue-input-row">
+          <input type="text" id="issueInput" placeholder="이슈 키워드 직접 입력 후 추가" onkeydown="if(event.key==='Enter')addIssueTag()">
+          <button onclick="addIssueTag()">추가</button>
+        </div>
+      </div>
+
+      <!-- 상담 유형 -->
+      <div class="section">
+        <div class="section-title">상담 유형</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:32px;"></th>
+              <th style="text-align:left;padding-left:8px;">상담유형</th>
+              <th style="width:48px;">편집</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="text-align:center;"><input type="radio" name="counselType" value="type1"></td>
+              <td class="editable-cell"><span class="cell-text">전세자금대출&gt;대출한도&gt;한도문의</span></td>
+              <td class="action-cell">
+                <button class="icon-btn edit-btn" onclick="startRowEdit(this)" title="수정">✎</button>
+                <button class="icon-btn del-row-btn" onclick="deleteRow(this)" title="삭제">✕</button>
+              </td>
+            </tr>
+            <tr>
+              <td style="text-align:center;"><input type="radio" name="counselType" value="type2"></td>
+              <td class="editable-cell"><span class="cell-text">전세자금대출&gt;금리&gt;기준금리문의</span></td>
+              <td class="action-cell">
+                <button class="icon-btn edit-btn" onclick="startRowEdit(this)" title="수정">✎</button>
+                <button class="icon-btn del-row-btn" onclick="deleteRow(this)" title="삭제">✕</button>
+              </td>
+            </tr>
+            <tr>
+              <td style="text-align:center;"><input type="radio" name="counselType" value="type3"></td>
+              <td class="editable-cell"><span class="cell-text">전세자금대출&gt;신청절차&gt;필요서류문의</span></td>
+              <td class="action-cell">
+                <button class="icon-btn edit-btn" onclick="startRowEdit(this)" title="수정">✎</button>
+                <button class="icon-btn del-row-btn" onclick="deleteRow(this)" title="삭제">✕</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 핵심 문장 -->
+      <div class="section">
+        <div class="section-title">핵심 문장</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-rank">순위</th>
+              <th style="text-align:left;padding-left:8px;">핵심 문장</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank">1</td>
+              <td class="editable-cell"><span class="cell-text">보증금이 3억인데 일단 2억 정도 대출이 필요해서요</span></td>
+            </tr>
+            <tr>
+              <td class="rank">2</td>
+              <td class="editable-cell"><span class="cell-text">금리는 어떻게 되나요</span></td>
+            </tr>
+            <tr>
+              <td class="rank">3</td>
+              <td class="editable-cell"><span class="cell-text">예 그럼 서류가 뭐 필요한가요</span></td>
+            </tr>
+            <tr>
+              <td class="rank">4</td>
+              <td class="editable-cell"><span class="cell-text">그러면 일단 신청할게요 어떻게 하면 되나요</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 상담 요약 -->
+      <div class="section">
+        <div class="section-title">상담 요약</div>
+        <div class="section-inner">
+          <div class="summary-plain-item">
+            <div class="summary-plain-label">고객 발화</div>
+            <div class="summary-plain-text" ondblclick="startEdit(this)" data-md="전세자금 2억 대출 가능 여부·금리·서류·비대면 신청 방법을 문의하고 신청 의사를 표명함."></div>
+          </div>
+          <div class="summary-plain-item">
+            <div class="summary-plain-label">상담원 발화</div>
+            <div class="summary-plain-text" ondblclick="startEdit(this)" data-md="연봉 5천 기준 2억 가능, 금리 3.842%(우대 3.6%), 서류·비대면 신청·중도이사 처리 방법을 안내함."></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col-left -->
+
+    <!-- ======= 우측 컬럼 ======= -->
+    <div class="col-right">
+
+      <!-- 고객 정보 -->
+      <div class="section">
+        <div class="section-title">고객 정보</div>
+        <div class="customer-inline">
+          <span class="name">고*1 <span style="font-size:12px;color:#888;font-weight:normal;">(45세)</span></span>
+          <span class="divider">|</span>
+          <span class="info-chip"><span class="info-label">가입번호</span>cust001</span>
+          <span class="info-chip"><span class="info-label">연락처</span>****-6910</span>
+          <span class="info-chip"><span class="info-label">지역</span>-</span>
+        </div>
+      </div>
+
+      <!-- 긍부정 분석 -->
+      <div class="section">
+        <div class="section-title">긍부정 분석</div>
+
+        <!-- 종합 점수 -->
+        <div class="sent-score-wrap">
+          <div class="sent-score-badge">
+            <span class="badge-num">66.7</span>
+            <span class="badge-label">종합 점수</span>
+          </div>
+          <div class="sent-gauge-box">
+            <div class="sent-gauge-label">
+              <span>부정 -100</span>
+              <span>중립 0</span>
+              <span>긍정 +100</span>
+            </div>
+            <div class="sent-gauge-track">
+              <!-- 부정: 0~50% -->
+              <div class="sent-gauge-fill negative" id="sentGaugeFillNeg" style="width:0%;"></div>
+              <!-- 긍정: 50~100% -->
+              <div class="sent-gauge-fill positive" id="sentGaugeFillPos" style="width:0%;"></div>
+            </div>
+          </div>
+        </div>
+        <!-- 긍부정 현황 -->
+        <div class="sent-items-container">
+          <!-- 좌우 배치 영역 -->
+          <div class="sent-bar-row">
+            <!-- 부정 항목 (왼쪽) -->
+            <div class="sent-items-left">
+              <div class="sent-item">
+                <span class="sent-item-label">좀 불편하긴 해요</span>
+              </div>
+              <div class="sent-item">
+                <span class="sent-item-label">어렵다</span>
+              </div>
+              <div class="sent-item">
+                <span class="sent-item-label">복잡</span>
+              </div>
+              <div class="sent-item">
+                <span class="sent-item-label">번거롭다</span>
+              </div>
+            </div>
+
+
+            <!-- 긍정 항목 (오른쪽) -->
+            <div class="sent-items-right">
+              <div class="sent-item">
+                <span class="sent-item-label">감사합니다, 잘 됐으면 좋겠어요</span>
+              </div>
+              <div class="sent-item">
+                <span class="sent-item-label">좋아요</span>
+              </div>
+              <div class="sent-item">
+                <span class="sent-item-label">알겠습니다</span>
+              </div>
+              <div class="sent-item">
+                <span class="sent-item-label">만족스럽습니다</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 상담 평가 -->
+      <div class="section">
+        <div class="section-title">상담 평가</div>
+        <div class="eval-body">
+          <div class="radar-layout">
+            <!-- 레이더 그래프 -->
+            <div class="radar-canvas-box">
+              <canvas id="evalRadarChart"></canvas>
+            </div>
+            <!-- 5개 지표 근거 -->
+            <div class="radar-legend-box" id="radarLegend"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col-right -->
+
+  </div><!-- /popup-body -->
+
+  <!-- 푸터 -->
+  <div class="popup-footer">
+    <button class="btn-confirm">확인</button>
+    <button class="btn-send">전송</button>
+  </div>
+
+</div><!-- /popup -->
+
+<script>
+/* ── 이슈 태그 ── */
+function addIssueTag() {
+  const input = document.getElementById('issueInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const area = document.getElementById('issueTagArea');
+  const tag = document.createElement('span');
+  tag.className = 'issue-tag user';
+  tag.innerHTML = val + ' <button class="del-btn" onclick="removeTag(this)">×</button>';
+  area.appendChild(tag);
+  input.value = '';
+  input.focus();
+}
+function removeTag(btn) { btn.closest('.issue-tag').remove(); }
+
+/* ── 행 인라인 수정 ── */
+function startRowEdit(btn) {
+  const td = btn.closest('tr').querySelector('.editable-cell');
+  const span = td.querySelector('.cell-text');
+  if (td.querySelector('.row-edit-input')) return;
+  const input = document.createElement('input');
+  input.className = 'row-edit-input';
+  input.value = span.textContent;
+  span.style.display = 'none';
+  td.appendChild(input);
+  input.focus();
+  function save() { span.textContent = input.value; span.style.display = ''; input.remove(); }
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') { input.remove(); span.style.display = ''; }
+  });
+}
+
+/* ── 행 삭제 + 순위 재정렬 ── */
+function deleteRow(btn) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  const tr = btn.closest('tr');
+  const tbody = tr.closest('tbody');
+  tr.remove();
+  tbody.querySelectorAll('tr').forEach((r, i) => {
+    const c = r.querySelector('.rank');
+    if (c) c.textContent = i + 1;
+  });
+}
+
+/* ── 긍부정 탭 전환 ── */
+function switchSentTab(tabEl, panelId) {
+  const section = tabEl.closest('.section');
+  section.querySelectorAll('.sent-tab').forEach(t => t.classList.remove('active'));
+  section.querySelectorAll('.sent-panel').forEach(p => p.classList.remove('active'));
+  tabEl.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+/* ── 요약 인라인 편집 ── */
+function startEdit(el) {
+  if (el.nextElementSibling && el.nextElementSibling.classList.contains('summary-editor')) return;
+  const h = el.getBoundingClientRect().height;
+  const ta = document.createElement('textarea');
+  ta.className = 'summary-editor';
+  ta.value = el.dataset.md || '';
+  ta.style.height = Math.max(h, 52) + 'px';
+  el.style.display = 'none';
+  el.parentNode.insertBefore(ta, el.nextSibling);
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  function save() {
+    el.dataset.md = ta.value;
+    el.innerHTML = marked.parse(ta.value);
+    ta.remove();
+    el.style.display = '';
+  }
+  ta.addEventListener('blur', save);
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { ta.removeEventListener('blur', save); ta.remove(); el.style.display = ''; }
+  });
+}
+
+/* ── DOMContentLoaded 초기화 ── */
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* 마크다운 렌더링 */
+  document.querySelectorAll('.summary-plain-text[data-md]').forEach(el => {
+    el.innerHTML = marked.parse(el.dataset.md);
+  });
+
+  /* 긍부정 게이지 애니메이션 (부정/긍정 분리) */
+  const score = 66.7;
+  let negPct = 0;
+  let posPct = 0;
+
+  if (score < 0) {
+    // 부정: -100 ~ 0
+    negPct = Math.abs(score) / 100 * 50;
+    posPct = 0;
+  } else if (score > 0) {
+    // 긍정: 0 ~ +100
+    negPct = 0;
+    posPct = score / 100 * 50;
+  }
+
+  setTimeout(() => {
+    document.getElementById('sentGaugeFillNeg').style.width = negPct + '%';
+    document.getElementById('sentGaugeFillPos').style.width = posPct + '%';
+  }, 200);
+
+  /* 레이더 그래프 */
+  const evalData = [
+    {
+      label: '공감 대응',
+      score: 7,
+      desc: '기본 공감 표현 포함, 중도이사 우려에 추가 설명 다소 부족'
+    },
+    {
+      label: '언어 준수',
+      score: 10,
+      desc: '금칙어·금지어 사용 없음, 고객 발화 내 금칙어 미감지'
+    },
+    {
+      label: '상담 태도',
+      score: 8,
+      desc: '안내 적극적·신속, 서류·절차 명확히 전달'
+    },
+    {
+      label: '책임 이행',
+      score: 9,
+      desc: '책임 회피 표현 없음, 고객 문의에 해결 중심 응대'
+    },
+    {
+      label: '발화 효율',
+      score: 8,
+      desc: '불필요 반복 발화 없음, 간결하고 명확한 안내'
+    },
+  ];
+
+  const radarCtx = document.getElementById('evalRadarChart').getContext('2d');
+  new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+      labels: evalData.map(d => d.label),
+      datasets: [{
+        data: evalData.map(d => d.score),
+        backgroundColor: 'rgba(44,74,124,0.15)',
+        borderColor: '#2c4a7c',
+        borderWidth: 2,
+        pointBackgroundColor: '#2c4a7c',
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 10,
+          ticks: { stepSize: 2, font: { size: 9 }, backdropPadding: 2 },
+          pointLabels: { font: { size: 10 }, color: '#333' },
+          grid: { color: '#e0e3eb' },
+          angleLines: { color: '#d0d5de' }
+        }
+      }
+    }
+  });
+
+  /* 지표 근거 렌더링 */
+  const box = document.getElementById('radarLegend');
+  const total = evalData.reduce((s, d) => s + d.score, 0);
+  evalData.forEach(d => {
+    const pct = (d.score / 10 * 100).toFixed(0);
+    const div = document.createElement('div');
+    div.className = 'radar-item';
+    div.innerHTML = `
+      <div class="radar-item-header">
+        <span class="r-label">${d.label}</span>
+        <span class="r-score-badge">${d.score}/10</span>
+      </div>
+      <div class="r-score-bar"><div class="r-score-fill" style="width:${pct}%"></div></div>
+      <div class="r-desc">${d.desc}</div>`;
+    box.appendChild(div);
+  });
+
+  /* 총점 표시 */
+  document.getElementById('evalTotalScore').textContent = total;
+  const grade = total >= 45 ? '우수' : total >= 38 ? '양호' : total >= 28 ? '보통' : '미흡';
+  document.getElementById('evalGrade').textContent = grade;
+  const gradeEl = document.getElementById('evalGrade');
+  if (total >= 45) {
+    gradeEl.style.background = '#e5f0ff'; gradeEl.style.color = '#1a6bc4'; gradeEl.style.borderColor = '#8ab4f5';
+  } else if (total >= 38) {
+    gradeEl.style.background = '#eaf4ee'; gradeEl.style.color = '#1a7a3a'; gradeEl.style.borderColor = '#82d4a0';
+  } else if (total >= 28) {
+    gradeEl.style.background = '#fffce0'; gradeEl.style.color = '#b8860b'; gradeEl.style.borderColor = '#e0c040';
+  } else {
+    gradeEl.style.background = '#feecec'; gradeEl.style.color = '#c0392b'; gradeEl.style.borderColor = '#f5a0a0';
+  }
+});
+</script>
+</body>
+</html>

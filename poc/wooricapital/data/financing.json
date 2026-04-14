@@ -1,0 +1,46 @@
+[
+  {
+    "id": "loan_001",
+    "name": "우리 일반대출",
+    "term": 60,
+    "rate": 3.5,
+    "monthlyPayment": 850000,
+    "requirements": {
+      "minIncome": 3000000,
+      "minCredit": "7등급"
+    }
+  },
+  {
+    "id": "loan_002",
+    "name": "우리 우대 대출",
+    "term": 60,
+    "rate": 2.9,
+    "monthlyPayment": 780000,
+    "requirements": {
+      "minIncome": 5000000,
+      "minCredit": "2등급"
+    }
+  },
+  {
+    "id": "loan_003",
+    "name": "우리 장기 대출",
+    "term": 84,
+    "rate": 4.5,
+    "monthlyPayment": 650000,
+    "requirements": {
+      "minIncome": 2500000,
+      "minCredit": "9등급"
+    }
+  },
+  {
+    "id": "loan_004",
+    "name": "우리 단기 대출",
+    "term": 36,
+    "rate": 2.8,
+    "monthlyPayment": 1450000,
+    "requirements": {
+      "minIncome": 4000000,
+      "minCredit": "3등급"
+    }
+  }
+]

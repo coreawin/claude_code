@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원 페이지 테스트</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .test-info { background: #fffbea; border: 1px solid #ffd700; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 13px; color: #665d1f; }
+    .test-info strong { color: #cc9900; }
+    .test-section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .test-section h3 { margin-bottom: 10px; color: #333; }
+    .test-result { background: #f0f9ff; border-left: 4px solid #1a56db; padding: 10px; margin: 5px 0; font-size: 12px; }
+    .test-result.pass { background: #f0fdf4; border-left-color: #28c76f; }
+    .test-result.fail { background: #fef2f2; border-left-color: #dc2626; }
+    code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1 style="margin-bottom: 20px;">🧪 회원 페이지 (member.html) 테스트</h1>
+
+  <div class="test-info">
+    <strong>테스트 목적:</strong> member.html이 다음 기능들을 정상 작동하는지 검증합니다.
+    <br><strong>검증 항목:</strong> 고객 데이터 로드, 추천 차량 렌더링, 검색 기능, 사용자 전환 등
+  </div>
+
+  <div id="testResults"></div>
+</div>
+
+<script src="search_data.js"></script>
+<script src="common.js"></script>
+<script src="member.js"></script>
+
+<script>
+  // 테스트 함수
+  function runTests() {
+    const results = [];
+
+    // 테스트 1: SEARCH_QUERIES 로드 확인
+    try {
+      const queriesLoaded = typeof SEARCH_QUERIES !== 'undefined' && SEARCH_QUERIES.length > 0;
+      results.push({
+        name: 'SEARCH_QUERIES 데이터 로드',
+        pass: queriesLoaded,
+        detail: queriesLoaded ? `✓ ${SEARCH_QUERIES.length}개의 질의 로드됨` : '✗ SEARCH_QUERIES를 찾을 수 없습니다'
+      });
+    } catch (e) {
+      results.push({
+        name: 'SEARCH_QUERIES 데이터 로드',
+        pass: false,
+        detail: `✗ 오류: ${e.message}`
+      });
+    }
+
+    // 테스트 2: SEARCH_RESULTS 로드 확인
+    try {
+      const resultsLoaded = typeof SEARCH_RESULTS !== 'undefined' && Object.keys(SEARCH_RESULTS).length > 0;
+      results.push({
+        name: 'SEARCH_RESULTS 데이터 로드',
+        pass: resultsLoaded,
+        detail: resultsLoaded ? `✓ ${Object.keys(SEARCH_RESULTS).length}개의 결과셋 로드됨` : '✗ SEARCH_RESULTS를 찾을 수 없습니다'
+      });
+    } catch (e) {
+      results.push({
+        name: 'SEARCH_RESULTS 데이터 로드',
+        pass: false,
+        detail: `✗ 오류: ${e.message}`
+      });
+    }
+
+    // 테스트 3: CAR_IMGS 이미지 경로 확인
+    try {
+      const imgsLoaded = typeof CAR_IMGS !== 'undefined' && Object.keys(CAR_IMGS).length === 8;
+      results.push({
+        name: 'CAR_IMGS 이미지 경로 설정',
+        pass: imgsLoaded,
+        detail: imgsLoaded ? `✓ 8개의 차량 이미지 경로 정의됨` : '✗ CAR_IMGS 또는 이미지가 부족합니다'
+      });
+    } catch (e) {
+      results.push({
+        name: 'CAR_IMGS 이미지 경로 설정',
+        pass: false,
+        detail: `✗ 오류: ${e.message}`
+      });
+    }
+
+    // 테스트 4: DATA 객체 로드 확인
+    try {
+      const dataLoaded = typeof DATA !== 'undefined' && DATA.A && DATA.B;
+      results.push({
+        name: 'DATA 고객 정보 객체 로드',
+        pass: dataLoaded,
+        detail: dataLoaded ? `✓ A사용자(${DATA.A.name}), B사용자(${DATA.B.name}) 정의됨` : '✗ DATA 객체를 찾을 수 없습니다'
+      });
+    } catch (e) {
+      results.push({
+        name: 'DATA 고객 정보 객체 로드',
+        pass: false,
+        detail: `✗ 오류: ${e.message}`
+      });
+    }
+
+    // 테스트 5: initSearch 함수 테스트
+    try {
+      const initResult = initSearch();
+      results.push({
+        name: 'initSearch() 함수 호출',
+        pass: initResult === true,
+        detail: initResult ? '✓ 검색 시스템 초기화 완료' : '✗ initSearch() 실패'
+      });
+    } catch (e) {
+      results.push({
+        name: 'initSearch() 함수 호출',
+        pass: false,
+        detail: `✗ 오류: ${e.message}`
+      });
+    }
+
+    // 테스트 6: 검색 함수 테스트
+    try {
+      // performSearch("연비 SUV")를 시뮬레이션
+      const keywords = ["연비", "suv"];
+      const matches = searchQueries.map(q => {
+        const intersection = keywords.filter(k =>
+          q.keywords.some(qk => qk.includes(k) || k.includes(qk.substring(0, 2)))
+        );
+        return {
+          ...q,
+          score: intersection.length
+        };
+      }).filter(m => m.score > 0);
+
+      const searchWorks = matches.length > 0;
+      results.push({
+        name: '검색 알고리즘 테스트 ("연비 SUV")',
+        pass: searchWorks,
+        detail: searchWorks ? `✓ ${matches.length}개의 결과 매칭됨` : '✗ 검색 결과 없음'
+      });
+    } catch (e) {
+      results.push({
+        name: '검색 알고리즘 테스트',
+        pass: false,
+        detail: `✗ 오류: ${e.message}`
+      });
+    }
+
+    // 테스트 7: 주요 UI 함수 존재 확인
+    try {
+      const functionsExist = typeof renderMain === 'function' &&
+                             typeof onSelectA === 'function' &&
+                             typeof onSelectB === 'function' &&
+                             typeof setTab === 'function' &&
+                             typeof apply === 'function';
+      results.push({
+        name: '회원 페이지 주요 함수 정의',
+        pass: functionsExist,
+        detail: functionsExist ? '✓ renderMain, onSelectA, onSelectB, setTab, apply 모두 정의됨' : '✗ 일부 함수가 정의되지 않았습니다'
+      });
+    } catch (e) {
+      results.push({
+        name: '회원 페이지 주요 함수 정의',
+        pass: false,
+        detail: `✗ 오류: ${e.message}`
+      });
+    }
+
+    // 테스트 8: 추천 차량 데이터 확인
+    try {
+      const recommendsExist = DATA.A.recommendedCars && DATA.A.recommendedCars.length > 0 &&
+                               DATA.B.recommendedCars && DATA.B.recommendedCars.length > 0;
+      const carCount = (DATA.A.recommendedCars.length + DATA.B.recommendedCars.length);
+      results.push({
+        name: '고객별 추천 차량 데이터',
+        pass: recommendsExist,
+        detail: recommendsExist ? `✓ A사용자 ${DATA.A.recommendedCars.length}개, B사용자 ${DATA.B.recommendedCars.length}개 차량 정의됨` : '✗ 추천 차량 데이터 부족'
+      });
+    } catch (e) {
+      results.push({
+        name: '고객별 추천 차량 데이터',
+        pass: false,
+        detail: `✗ 오류: ${e.message}`
+      });
+    }
+
+    return results;
+  }
+
+  // 테스트 실행
+  window.addEventListener('load', function() {
+    const results = runTests();
+    const passCount = results.filter(r => r.pass).length;
+    const totalCount = results.length;
+
+    let html = `
+      <div class="test-section">
+        <h3>📊 테스트 결과: ${passCount}/${totalCount} 통과</h3>
+    `;
+
+    results.forEach(result => {
+      const className = result.pass ? 'pass' : 'fail';
+      const icon = result.pass ? '✅' : '❌';
+      html += `
+        <div class="test-result ${className}">
+          ${icon} <strong>${result.name}</strong><br>
+          ${result.detail}
+        </div>
+      `;
+    });
+
+    html += '</div>';
+
+    if (passCount === totalCount) {
+      html += `
+        <div class="test-section" style="background: #f0fdf4; border-left: 4px solid #28c76f;">
+          <h3>🎉 모든 테스트 통과!</h3>
+          <p>member.html은 모든 필수 기능이 정상 작동합니다.</p>
+          <p style="margin-top: 10px; color: #666; font-size: 12px;">다음 단계: <code>B단계: non_member.html 구현</code></p>
+        </div>
+      `;
+    } else {
+      html += `
+        <div class="test-section" style="background: #fef2f2; border-left: 4px solid #dc2626;">
+          <h3>⚠️ 일부 테스트 실패</h3>
+          <p>위의 실패한 항목들을 확인하고 수정하시기 바랍니다.</p>
+        </div>
+      `;
+    }
+
+    document.getElementById('testResults').innerHTML = html;
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "queryId": "result_04",
+  "title": "수입 브랜드 추천",
+  "description": "독일과 일본의 프리미엄 브랜드 추천",
+  "cars": [
+    {
+      "img": "bmw5",
+      "brand": "BMW",
+      "name": "5시리즈 530i<br>xDrive M스포츠",
+      "spec": "2.0L 터보 · 252마력 · AWD",
+      "price": "8,230만",
+      "sub": "월 할부 약 161만원 (60개월)",
+      "tag": "수입",
+      "tagC": "tag-i",
+      "highlight": "독일 프리미엄"
+    },
+    {
+      "img": "nx350h",
+      "brand": "LEXUS",
+      "name": "NX 350h<br>F SPORT",
+      "spec": "2.5L HEV · 복합 14.6km/L",
+      "price": "6,560만",
+      "sub": "월 할부 약 127만원 (60개월)",
+      "tag": "수입HEV",
+      "tagC": "tag-i",
+      "highlight": "렉서스 고급감"
+    }
+  ]
+}

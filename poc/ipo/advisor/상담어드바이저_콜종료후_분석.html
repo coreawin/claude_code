@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상담 이력 상세</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: '맑은 고딕', 'Malgun Gothic', sans-serif;
+    font-size: 13px;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  /* ── 팝업 ── */
+  .popup {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    width: 980px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── 헤더 ── */
+  .popup-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: #2c4a7c; color: #fff;
+    border-radius: 6px 6px 0 0;
+    font-size: 14px; font-weight: bold;
+    flex-shrink: 0;
+  }
+  .popup-header .close-btn {
+    cursor: pointer; font-size: 20px; line-height: 1;
+    color: #fff; background: none; border: none; padding: 0 4px;
+  }
+
+  /* ── 본문 2컬럼 ── */
+  .popup-body {
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex: 1;
+    overflow: hidden;
+  }
+  .col-left,
+  .col-right {
+    display: flex; flex-direction: column;
+    gap: 8px;
+    overflow-y: auto; overflow-x: hidden;
+    padding-right: 2px;
+  }
+
+  /* ── 섹션 공통 ── */
+  .section {
+    border: 1px solid #d0d5de;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .col-left  .section:last-child,
+  .col-right .section:last-child {
+    flex: 1; display: flex; flex-direction: column; min-height: 0;
+  }
+  .col-left  .section:last-child .section-inner,
+  .col-right .section:last-child .section-inner {
+    flex: 1; overflow-y: auto; min-height: 0;
+  }
+  .section-title {
+    background: #f0f3f8;
+    border-bottom: 1px solid #d0d5de;
+    padding: 5px 10px;
+    font-weight: bold; font-size: 12px; color: #333;
+    flex-shrink: 0;
+  }
+
+  /* ── 고객 기본정보 ── */
+  .customer-inline {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap; padding: 6px 10px;
+  }
+  .customer-inline .name { font-weight: bold; font-size: 14px; color: #2c4a7c; }
+  .customer-inline .divider { color: #bbb; }
+  .customer-inline .info-chip {
+    background: #f0f3f8; border: 1px solid #d0d5de;
+    border-radius: 3px; padding: 2px 7px; font-size: 12px; color: #444;
+  }
+  .customer-inline .info-label { font-size: 11px; color: #888; margin-right: 3px; }
+
+  /* ── 공통 테이블 ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .data-table thead th {
+    background: #f5f7fb; color: #666; font-weight: bold;
+    font-size: 10.5px;
+    text-align: center; padding: 3px 4px;
+    border-bottom: 1px solid #e0e3eb; white-space: nowrap;
+  }
+  .data-table thead th.col-rank { width: 1%; min-width: 26px; }
+  .data-table tbody td { padding: 5px 8px; border-bottom: 1px solid #eef0f5; color: #333; }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody td.rank {
+    text-align: center; color: #e05a2b; font-weight: bold;
+    padding: 5px 4px; white-space: nowrap;
+  }
+  .type-link { color: #2c4a7c; text-decoration: none; }
+  .type-link:hover { text-decoration: underline; }
+
+  /* ── 키워드 탭 ── */
+  .kw-tabs {
+    display: flex; gap: 3px; padding: 6px 8px 0;
+    background: #f7f9fc;
+    border-bottom: 1px solid #d0d5de;
+    flex-shrink: 0;
+  }
+  .kw-tab {
+    padding: 4px 10px;
+    border: 1px solid #ccc; border-bottom: none;
+    border-radius: 3px 3px 0 0;
+    background: #e8edf5; cursor: pointer;
+    font-size: 12px; color: #555;
+    transition: background 0.15s;
+  }
+  .kw-tab.active {
+    background: #fff; border-color: #2c4a7c; color: #2c4a7c;
+    font-weight: bold; border-bottom: 1px solid #fff; margin-bottom: -1px;
+  }
+  .kw-tab:hover:not(.active) { background: #dce5f0; }
+  .kw-panel { display: none; }
+  .kw-panel.active { display: block; }
+
+  /* ── 키워드 테이블 ── */
+  .kw-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .kw-table th {
+    background: #f5f7fb; color: #555; font-weight: bold;
+    text-align: center; padding: 4px 4px;
+    border-bottom: 1px solid #e0e3eb; white-space: nowrap;
+  }
+  .kw-table th.col-rank { width: 1%; min-width: 26px; }
+  .kw-table td { padding: 4px 8px; border-bottom: 1px solid #eef0f5; text-align: center; color: #333; }
+  .kw-table td.rank { color: #e05a2b; font-weight: bold; padding: 4px 4px; }
+  .kw-table td.kw-word { color: #2c4a7c; }
+  .kw-table tr:last-child td { border-bottom: none; }
+
+  /* ── 이슈 태그 ──
+     시스템 추출: 파란 계열
+     사용자 추가: 녹색 계열
+  ── */
+  .issue-tag-area {
+    padding: 8px 10px; min-height: 40px;
+    display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+  }
+  /* 범례 */
+  .issue-legend {
+    width: 100%; display: flex; gap: 12px;
+    padding: 4px 10px 0;
+    font-size: 11px; color: #888;
+  }
+  .issue-legend span { display: flex; align-items: center; gap: 4px; }
+  .legend-dot {
+    width: 9px; height: 9px; border-radius: 50%; display: inline-block;
+  }
+  .legend-dot.sys  { background: #5b8def; }
+  .legend-dot.user { background: #27ae60; }
+
+  /* 공통 태그 베이스 */
+  .issue-tag {
+    border-radius: 12px; padding: 3px 8px 3px 10px;
+    font-size: 12px; display: inline-flex; align-items: center; gap: 4px;
+    font-weight: 500;
+  }
+  /* 시스템(자동 추출) */
+  .issue-tag.sys {
+    background: #e8f0fe; border: 1px solid #aac4f5; color: #1a55c4;
+  }
+  /* 사용자 추가 */
+  .issue-tag.user {
+    background: #e6f7ee; border: 1px solid #82d4a0; color: #1a7a3a;
+  }
+  .issue-tag .del-btn {
+    cursor: pointer; font-size: 14px; line-height: 1;
+    background: none; border: none; padding: 0 1px;
+  }
+  .issue-tag.sys  .del-btn { color: #7ba7e8; }
+  .issue-tag.user .del-btn { color: #6ec48b; }
+  .issue-tag.sys  .del-btn:hover { color: #c0392b; }
+  .issue-tag.user .del-btn:hover { color: #c0392b; }
+
+  .issue-input-row {
+    display: flex; gap: 5px; padding: 5px 10px 7px;
+    border-top: 1px solid #eef0f5;
+  }
+  .issue-input-row input {
+    flex: 1; padding: 3px 8px;
+    border: 1px solid #ccc; border-radius: 3px;
+    font-size: 12px; outline: none;
+  }
+  .issue-input-row input:focus { border-color: #2c4a7c; }
+  .issue-input-row button {
+    padding: 3px 10px; background: #2c4a7c; color: #fff;
+    border: none; border-radius: 3px; font-size: 12px; cursor: pointer;
+  }
+  .issue-input-row button:hover { background: #1e3460; }
+
+  /* ── 상담 요약 (폴딩) ── */
+  .summary-group { display: flex; flex-direction: column; }
+  .summary-item { border-bottom: 1px solid #e0e4ed; }
+  .summary-item:last-child { border-bottom: none; }
+
+  /* 클릭 가능한 서브 헤더 */
+  .summary-sub-title {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; font-weight: bold; color: #444;
+    background: #f5f7fc;
+    padding: 5px 10px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid transparent;
+    transition: background 0.15s;
+  }
+  .summary-sub-title:hover { background: #eaecf5; }
+  .summary-sub-title.open { border-bottom-color: #e0e4ed; }
+
+  /* 폴딩 아이콘 */
+  .fold-icon {
+    font-size: 11px; color: #888;
+    transition: transform 0.2s;
+    display: inline-block;
+  }
+  .summary-sub-title.open .fold-icon { transform: rotate(0deg); }
+  .summary-sub-title:not(.open) .fold-icon { transform: rotate(-90deg); }
+
+  /* 전체 요약 헤더 강조 */
+  .summary-sub-title.all-summary { background: #edf2fb; color: #2c4a7c; }
+  .summary-sub-title.all-summary:hover { background: #dce7f5; }
+
+  /* 요약 텍스트 영역 */
+  .summary-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.25s ease;
+  }
+  .summary-body.open {
+    max-height: 200px;
+  }
+  .summary-text {
+    font-size: 12px; color: #333; line-height: 1.6;
+    padding: 6px 12px;
+    max-height: 115px;
+    overflow-y: auto;
+    border-radius: 3px;
+    outline: none;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  /* 편집 시 textarea로 교체 */
+  .summary-editor {
+    display: block;
+    width: 100%;
+    /* 크기는 JS에서 뷰어 기준으로 동적 설정 */
+    padding: 6px 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    font-family: '맑은 고딕', 'Malgun Gothic', monospace;
+    background: #fffdf0;
+    border: 2px solid #f0c040;
+    border-left: none;
+    border-right: none;
+    outline: none;
+    resize: none;          /* 크기 고정: 뷰어와 동일 */
+    overflow-y: auto;
+    color: #333;
+    box-sizing: border-box;
+  }
+  /* 마크다운 렌더링 스타일 */
+  .summary-text p  { margin: 0 0 4px; }
+  .summary-text p:last-child { margin-bottom: 0; }
+  .summary-text ul, .summary-text ol { padding-left: 16px; margin: 3px 0; }
+  .summary-text li { margin-bottom: 2px; }
+  .summary-text strong { color: #2c4a7c; font-weight: bold; }
+  .summary-text em { color: #555; }
+  .summary-text code {
+    background: #f0f3f8; border-radius: 2px;
+    padding: 1px 4px; font-size: 11px; color: #c0392b;
+  }
+  .summary-text h4 {
+    font-size: 12px; font-weight: bold; color: #333;
+    margin: 4px 0 2px;
+  }
+  .summary-edit-hint {
+    font-size: 10px; color: #bbb; font-style: italic;
+    font-weight: normal; margin-left: 6px;
+    transition: color 0.15s;
+  }
+
+  /* ── 상담 평가 ── */
+  .eval-area {
+    padding: 8px 10px;
+    display: flex; gap: 12px; align-items: flex-start;
+    flex: 1;
+  }
+  .eval-signal {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; flex-shrink: 0; min-width: 56px;
+  }
+  .traffic-light {
+    width: 28px; height: 76px; background: #222;
+    border-radius: 14px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: space-around;
+    padding: 5px 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .light {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #333; transition: background 0.3s, box-shadow 0.3s;
+  }
+  /* 신호등 5색 항상 표시 */
+  .light-red    { background: #ff3b30; box-shadow: 0 0 7px #ff3b30; }
+  .light-orange { background: #ff9500; box-shadow: 0 0 7px #ff9500; }
+  .light-yellow { background: #ffcc00; box-shadow: 0 0 7px #ffcc00; }
+  .light-lime   { background: #34c759; box-shadow: 0 0 7px #34c759; }
+  .light-blue   { background: #007aff; box-shadow: 0 0 7px #007aff; }
+
+  .eval-label {
+    font-size: 11px; font-weight: bold;
+    padding: 2px 7px; border-radius: 10px; margin-top: 2px;
+  }
+  .status-danger    .eval-label { background: #ffe5e3; color: #c0392b; }
+  .status-poor      .eval-label { background: #fff3e0; color: #e67e22; }
+  .status-normal    .eval-label { background: #fffce0; color: #b8860b; }
+  .status-good      .eval-label { background: #eafaf1; color: #27ae60; }
+  .status-excellent .eval-label { background: #e5f0ff; color: #1a6bc4; }
+
+  .eval-reason { flex: 1; }
+  .eval-reason .reason-title { font-size: 11px; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .eval-reason ul { padding-left: 14px; margin: 0; }
+  .eval-reason ul li { font-size: 12px; color: #333; line-height: 1.6; margin-bottom: 2px; }
+
+  /* ── 푸터 ── */
+  .popup-footer {
+    display: flex; justify-content: center; gap: 8px;
+    padding: 8px 14px 12px;
+    flex-shrink: 0;
+    border-top: 1px solid #e8eaf0;
+  }
+  .btn-confirm {
+    padding: 6px 36px; background: #6b7280; color: #fff;
+    border: none; border-radius: 4px;
+    font-size: 13px; font-weight: bold; cursor: pointer;
+  }
+  .btn-confirm:hover { background: #4b5563; }
+  .btn-send {
+    padding: 6px 36px; background: #2c4a7c; color: #fff;
+    border: none; border-radius: 4px;
+    font-size: 13px; font-weight: bold; cursor: pointer;
+  }
+  .btn-send:hover { background: #1e3460; }
+</style>
+</head>
+<body>
+
+<div class="popup">
+
+  <!-- 헤더 -->
+  <div class="popup-header">
+    상담 이력 상세
+    <button class="close-btn" onclick="window.close()">×</button>
+  </div>
+
+  <!-- 본문 -->
+  <div class="popup-body">
+
+    <!-- ======= 좌측 컬럼 ======= -->
+    <div class="col-left">
+
+      <!-- 고객 기본정보 -->
+      <div class="section">
+        <div class="section-title">고객 기본정보</div>
+        <div class="customer-inline">
+          <span class="name">고*1 <span style="font-size:12px;color:#888;font-weight:normal;">(45세)</span></span>
+          <span class="divider">|</span>
+          <span class="info-chip"><span class="info-label">가입번호</span>cust001</span>
+          <span class="info-chip"><span class="info-label">연락처</span>****-6910</span>
+          <span class="info-chip"><span class="info-label">지역</span>-</span>
+        </div>
+      </div>
+
+      <!-- 상담 유형 -->
+      <div class="section">
+        <div class="section-title">상담 유형</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-rank">순위</th>
+              <th style="text-align:left; padding-left:8px;">상담유형</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank">1</td>
+              <td><a class="type-link" href="#">전세자금대출&gt;대출한도&gt;한도문의</a></td>
+            </tr>
+            <tr>
+              <td class="rank">2</td>
+              <td><a class="type-link" href="#">전세자금대출&gt;금리&gt;기준금리문의</a></td>
+            </tr>
+            <tr>
+              <td class="rank">3</td>
+              <td><a class="type-link" href="#">전세자금대출&gt;신청절차&gt;필요서류문의</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 핵심 문장 -->
+      <div class="section">
+        <div class="section-title">핵심 문장</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-rank">순위</th>
+              <th style="text-align:left; padding-left:8px;">핵심 문장</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank">1</td>
+              <td>보증금이 3억인데 일단 2억 정도 대출이 필요해서요</td>
+            </tr>
+            <tr>
+              <td class="rank">2</td>
+              <td>금리는 어떻게 되나요</td>
+            </tr>
+            <tr>
+              <td class="rank">3</td>
+              <td>예 그럼 서류가 뭐 필요한가요</td>
+            </tr>
+            <tr>
+              <td class="rank">4</td>
+              <td>그러면 일단 신청할게요 어떻게 하면 되나요</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 상담 평가 (좌측 마지막) -->
+      <div class="section">
+        <div class="section-title">상담 평가</div>
+        <div class="section-inner">
+          <div class="eval-area status-good" id="evalArea">
+            <div class="eval-signal">
+              <div class="traffic-light">
+                <div class="light light-red"></div>
+                <div class="light light-orange"></div>
+                <div class="light light-yellow"></div>
+                <div class="light light-lime"></div>
+                <div class="light light-blue"></div>
+              </div>
+              <span class="eval-label">양호</span>
+            </div>
+            <div class="eval-reason">
+              <div class="reason-title">평가 근거</div>
+              <ul>
+                <li>대출 한도, 금리, 서류 안내가 정확하고 충분하게 이루어짐</li>
+                <li>우대금리 질문에 구체적 조건(급여이체·자동이체·인터넷뱅킹)을 명확히 안내</li>
+                <li>비대면 신청 절차까지 안내하여 고객이 다음 단계를 이해할 수 있도록 지원</li>
+                <li>기본적인 공감 표현 포함, 단 중도 이사 우려에 추가 설명이 다소 부족</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col-left -->
+
+    <!-- ======= 우측 컬럼 ======= -->
+    <div class="col-right">
+
+      <!-- 키워드 현황 -->
+      <div class="section">
+        <div class="section-title">키워드 현황</div>
+
+        <div class="kw-tabs">
+          <div class="kw-tab active" onclick="switchTab(this,'panel-issue')">이슈</div>
+          <div class="kw-tab"        onclick="switchTab(this,'panel-pos')">긍정어</div>
+          <div class="kw-tab"        onclick="switchTab(this,'panel-neg')">부정어</div>
+          <div class="kw-tab"        onclick="switchTab(this,'panel-ban')">금칙어</div>
+          <div class="kw-tab"        onclick="switchTab(this,'panel-complaint')">민원</div>
+        </div>
+
+        <!-- 이슈 패널 -->
+        <div id="panel-issue" class="kw-panel active">
+          <!-- 범례 -->
+          <div class="issue-legend">
+            <span><i class="legend-dot sys"></i>자동 추출</span>
+            <span><i class="legend-dot user"></i>직접 추가</span>
+          </div>
+          <!-- 태그 목록 -->
+          <div class="issue-tag-area" id="issueTagArea">
+            <span class="issue-tag sys">전세사기 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+            <span class="issue-tag sys">금리인상 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+            <span class="issue-tag sys">대환대출 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+            <span class="issue-tag sys">부동산규제 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+            <span class="issue-tag sys">전세보증보험 <button class="del-btn" onclick="removeTag(this)">×</button></span>
+          </div>
+          <!-- 입력 -->
+          <div class="issue-input-row">
+            <input type="text" id="issueInput" placeholder="이슈 키워드 직접 입력 후 추가" onkeydown="if(event.key==='Enter')addIssueTag()">
+            <button onclick="addIssueTag()">추가</button>
+          </div>
+        </div>
+
+        <!-- 긍정어 -->
+        <div id="panel-pos" class="kw-panel">
+          <table class="kw-table">
+            <thead><tr><th class="col-rank">순위</th><th>긍정어 키워드</th><th style="width:46px;">횟수</th></tr></thead>
+            <tbody>
+              <tr><td class="rank">1</td><td class="kw-word">감사합니다</td><td>3</td></tr>
+              <tr><td class="rank">2</td><td class="kw-word">좋아요</td><td>2</td></tr>
+              <tr><td class="rank">3</td><td class="kw-word">알겠습니다</td><td>2</td></tr>
+              <tr><td class="rank">4</td><td class="kw-word">도움</td><td>1</td></tr>
+              <tr><td class="rank">5</td><td class="kw-word">친절</td><td>1</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 부정어 -->
+        <div id="panel-neg" class="kw-panel">
+          <table class="kw-table">
+            <thead><tr><th class="col-rank">순위</th><th>부정어 키워드</th><th style="width:46px;">횟수</th></tr></thead>
+            <tbody>
+              <tr><td class="rank">1</td><td class="kw-word">불편</td><td>2</td></tr>
+              <tr><td class="rank">2</td><td class="kw-word">어렵다</td><td>1</td></tr>
+              <tr><td class="rank">3</td><td class="kw-word">복잡</td><td>1</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 금칙어 -->
+        <div id="panel-ban" class="kw-panel">
+          <table class="kw-table">
+            <thead><tr><th class="col-rank">순위</th><th>금칙어 키워드</th><th style="width:46px;">횟수</th></tr></thead>
+            <tbody>
+              <tr><td colspan="3" style="text-align:center;color:#aaa;padding:12px 0;">해당 없음</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 민원 -->
+        <div id="panel-complaint" class="kw-panel">
+          <table class="kw-table">
+            <thead><tr><th class="col-rank">순위</th><th>민원 키워드</th><th style="width:46px;">횟수</th></tr></thead>
+            <tbody>
+              <tr><td class="rank">1</td><td class="kw-word">불만</td><td>1</td></tr>
+              <tr><td class="rank">2</td><td class="kw-word">항의</td><td>1</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /키워드 현황 -->
+
+      <!-- 상담 요약 (우측 마지막) -->
+      <div class="section">
+        <div class="section-title">상담 요약</div>
+        <div class="section-inner">
+          <div class="summary-group">
+
+            <!-- 고객 발화 요약 -->
+            <div class="summary-item">
+              <div class="summary-sub-title open" onclick="toggleSummary(this)">
+                고객 발화 요약<span class="summary-edit-hint">더블클릭하여 편집</span>
+                <span class="fold-icon">▼</span>
+              </div>
+              <div class="summary-body open">
+                <div class="summary-text" ondblclick="startEdit(this)" data-md="**주요 문의 내용**
+- 보증금 3억 기준 전세자금대출 **2억 가능 여부** 확인
+- 금리 조건 및 **우대금리 조건**(급여이체, 자동이체, 인터넷뱅킹) 문의
+- 필요 서류 및 **비대면 신청 절차** 질의
+- 중도 이사 발생 시 처리 방법 질의
+
+최종적으로 신청 의사를 표명함"></div>
+              </div>
+            </div>
+
+            <!-- 상담원 발화 요약 -->
+            <div class="summary-item">
+              <div class="summary-sub-title open" onclick="toggleSummary(this)">
+                상담원 발화 요약<span class="summary-edit-hint">더블클릭하여 편집</span>
+                <span class="fold-icon">▼</span>
+              </div>
+              <div class="summary-body open">
+                <div class="summary-text" ondblclick="startEdit(this)" data-md="**안내 내용 요약**
+- 연봉 5천만 원 기준 **전세대출 2억 가능** 안내
+- 금리: 기준 **3.842%**, 우대 적용 시 **3.6%** 수준
+- 우대 조건: 급여이체 `0.2%p`, 자동이체 3건 `0.1%p`, 인터넷뱅킹 `0.1%p`
+- 비대면 신청 방법 및 처리 기간(보통 **2주**) 안내
+- 중도 이사 처리 방법, 고정/변동 금리 선택 안내 포함"></div>
+              </div>
+            </div>
+
+            <!-- 상담 요약 (전체) -->
+            <div class="summary-item">
+              <div class="summary-sub-title all-summary open" onclick="toggleSummary(this)">
+                상담 요약 (전체)<span class="summary-edit-hint">더블클릭하여 편집</span>
+                <span class="fold-icon">▼</span>
+              </div>
+              <div class="summary-body open">
+                <div class="summary-text" ondblclick="startEdit(this)" data-md="#### 상담 요약
+
+**고객** 은 전세보증금 3억 기준 **대출 2억 가능 여부**, 금리·우대조건, 서류, 비대면 신청 방법 및 중도 이사 처리를 문의하였습니다.
+
+**상담원** 은 아래 내용을 안내하였습니다.
+- 연봉 5천 기준 **2억 대출 가능**
+- 금리 **3.842%**, 우대 시 **3.6%** (급여이체·자동이체·인터넷뱅킹 조건)
+- 필요 서류 목록 및 **비대면 신청 절차** (약 2주 소요)
+- 중도 이사·고정/변동 금리 선택 안내
+
+> 고객은 충분한 안내를 바탕으로 **신청 의사를 결정**하였습니다."></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col-right -->
+
+  </div><!-- /popup-body -->
+
+  <!-- 푸터 -->
+  <div class="popup-footer">
+    <button class="btn-confirm">확인</button>
+    <button class="btn-send">전송</button>
+  </div>
+
+</div><!-- /popup -->
+
+<script>
+/* 탭 전환 */
+function switchTab(tabEl, panelId) {
+  document.querySelectorAll('.kw-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.kw-panel').forEach(p => p.classList.remove('active'));
+  tabEl.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+/* 요약 폴딩 토글 */
+function toggleSummary(headerEl) {
+  const body = headerEl.nextElementSibling;
+  const isOpen = headerEl.classList.contains('open');
+  if (isOpen) {
+    headerEl.classList.remove('open');
+    body.classList.remove('open');
+  } else {
+    headerEl.classList.add('open');
+    body.classList.add('open');
+  }
+}
+
+/* 이슈 태그 추가 (사용자 = user 클래스) */
+function addIssueTag() {
+  const input = document.getElementById('issueInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const area = document.getElementById('issueTagArea');
+  const tag = document.createElement('span');
+  tag.className = 'issue-tag user';
+  tag.innerHTML = val + ' <button class="del-btn" onclick="removeTag(this)">×</button>';
+  area.appendChild(tag);
+  input.value = '';
+  input.focus();
+}
+
+/* 이슈 태그 삭제 */
+function removeTag(btn) {
+  btn.closest('.issue-tag').remove();
+}
+
+/* 발화 요약 인라인 편집 */
+/* 마크다운 초기 렌더링 */
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.summary-text[data-md]').forEach(el => {
+    el.innerHTML = marked.parse(el.dataset.md);
+  });
+});
+
+function startEdit(el) {
+  if (el.nextElementSibling && el.nextElementSibling.classList.contains('summary-editor')) return;
+
+  // 뷰어의 현재 크기 측정
+  const h = el.getBoundingClientRect().height;
+
+  const ta = document.createElement('textarea');
+  ta.className = 'summary-editor';
+  ta.value = el.dataset.md || '';
+  // 뷰어와 동일한 높이, max-height도 동일하게
+  ta.style.height = Math.max(h, 60) + 'px';
+  ta.style.maxHeight = '115px';
+
+  el.style.display = 'none';
+  el.parentNode.insertBefore(ta, el.nextSibling);
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+
+  const hint = el.closest('.summary-body').previousElementSibling.querySelector('.summary-edit-hint');
+  if (hint) { hint.textContent = 'Esc 또는 외부 클릭으로 저장'; hint.style.color = '#e09000'; }
+
+  function save() {
+    el.dataset.md = ta.value;
+    el.innerHTML = marked.parse(ta.value);
+    ta.remove();
+    el.style.display = '';
+    if (hint) { hint.textContent = '더블클릭하여 편집'; hint.style.color = ''; }
+  }
+
+  ta.addEventListener('blur', save);
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      ta.removeEventListener('blur', save);
+      ta.remove();
+      el.style.display = '';
+      if (hint) { hint.textContent = '더블클릭하여 편집'; hint.style.color = ''; }
+    }
+  });
+}
+
+// 편집 중 Enter → 저장(blur), Escape → 취소
+document.addEventListener('keydown', function(e) {
+  const el = document.activeElement;
+  if (!el.classList.contains('summary-text')) return;
+  if (e.key === 'Escape') {
+    el.blur();
+  }
+});
+</script>
+</body>
+</html>

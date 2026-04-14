@@ -1,0 +1,51 @@
+{
+  "queryId": "result_08",
+  "title": "국산·수입 전기차 추천",
+  "description": "충전 한 번으로 멀리, 유지비까지 절감되는 전기차를 추천드립니다",
+  "cars": [
+    {
+      "img": "ioniq5",
+      "brand": "HYUNDAI",
+      "name": "아이오닉5<br>롱레인지 AWD",
+      "spec": "전기 · 1회 충전 460km",
+      "price": "5,190만",
+      "sub": "월 할부 약 99만원 (60개월)",
+      "tag": "EV",
+      "tagC": "tag-ev",
+      "highlight": "국산 EV 1위"
+    },
+    {
+      "img": "ev6",
+      "brand": "KIA",
+      "name": "EV6 롱레인지<br>AWD GT-Line",
+      "spec": "전기 · 1회 충전 483km",
+      "price": "4,890만",
+      "sub": "월 할부 약 94만원 (60개월)",
+      "tag": "EV",
+      "tagC": "tag-ev",
+      "highlight": "항속거리 최강"
+    },
+    {
+      "img": "tesla_model3",
+      "brand": "TESLA",
+      "name": "모델3<br>롱레인지 AWD",
+      "spec": "전기 · 1회 충전 523km",
+      "price": "5,699만",
+      "sub": "월 할부 약 109만원 (60개월)",
+      "tag": "수입EV",
+      "tagC": "tag-ev",
+      "highlight": "자율주행 탑재"
+    },
+    {
+      "img": "ev3",
+      "brand": "KIA",
+      "name": "EV3<br>롱레인지 어스",
+      "spec": "전기 · 1회 충전 501km",
+      "price": "3,999만",
+      "sub": "월 할부 약 77만원 (60개월)",
+      "tag": "EV",
+      "tagC": "tag-ev",
+      "highlight": "입문 전기차 픽"
+    }
+  ]
+}
